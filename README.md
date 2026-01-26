@@ -1,4 +1,5 @@
 # Hanoi Relocation Dashboard
+[Live Demo](https://mild-karee-alinursu-e614120e.koyeb.app/)
 
 A Flask web application designed to help track progress toward relocating to Hanoi, Vietnam. This dashboard monitors learning goals (Python programming and Vietnamese language), freelance income, financial milestones, and provides a structured learning path.
 
