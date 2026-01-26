@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Instance folder
+instance/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Local
+*.db
+.env
+.DS_Store

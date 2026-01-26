@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hanoi Relocation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="container">
+            <div>
+                <h1>Hanoi Relocation Dashboard</h1>
+                <p>Target: October 31, 2026 | <span id="daysRemaining">--</span> days remaining</p>
+            </div>
+            <nav class="dashboard-nav">
+                <a href="/today">Today</a>
+                <a href="/" class="active">Dashboard</a>
+                <a href="/learning-path">Learning</a>
+                <a href="/settings">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container">
+            <!-- Income Gap Calculator (Feature 1) -->
+            <div class="income-calculator" id="incomeCalculator">
+                <h3>Income Target: <span id="incomeTargetDisplay">--</span>/month</h3>
+                <div class="income-gap">
+                    <div>
+                        <div class="income-gap-amount" id="incomeGap">--</div>
+                        <div>remaining this month</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; opacity: 0.9;">Current: <span id="currentIncome">--</span></div>
+                        <div style="font-size: 14px; opacity: 0.9;"><span id="daysLeftMonth">--</span> days left</div>
+                    </div>
+                </div>
+                <div class="income-suggestions">
+                    <h4>To hit your target, you need:</h4>
+                    <ul id="incomeSuggestions">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Stats Row -->
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <div class="quick-stat-icon">💰</div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value" id="savingsDisplay">--</div>
+                        <div class="quick-stat-label">Savings | <span id="runway">--</span> months runway</div>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-icon">🐍</div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value"><span id="pythonHoursWeek">0</span>h</div>
+                        <div class="quick-stat-label">Python this week / <span id="pythonTarget">8</span>h target</div>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-icon">🇻🇳</div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value"><span id="vietnameseHoursWeek">0</span>h</div>
+                        <div class="quick-stat-label">Vietnamese this week / <span id="vietnameseTarget">7</span>h target</div>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-icon">📚</div>
+                    <div class="quick-stat-content">
+                        <div class="quick-stat-value"><span id="learningProgress">0</span>%</div>
+                        <div class="quick-stat-label">Learning path complete</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Summary Card -->
+            <div class="card weekly-summary-card" id="weeklySummaryCard" style="margin-bottom: var(--space-24);">
+                <div class="card-header">
+                    <h2 class="card-title"><span class="card-icon">📊</span> This Week's Progress</h2>
+                    <span class="weekly-grade" id="weeklyGrade">-</span>
+                </div>
+                <div class="weekly-summary-grid">
+                    <div class="weekly-summary-item">
+                        <div class="weekly-summary-header">
+                            <span class="weekly-summary-icon">🐍</span>
+                            <span class="weekly-summary-label">Python</span>
+                        </div>
+                        <div class="weekly-summary-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="weeklyPythonBar" style="width: 0%; background: #3572A5;"></div>
+                            </div>
+                            <span class="weekly-summary-value"><span id="weeklyPythonHours">0</span>h / <span id="weeklyPythonTarget">8</span>h</span>
+                        </div>
+                    </div>
+                    <div class="weekly-summary-item">
+                        <div class="weekly-summary-header">
+                            <span class="weekly-summary-icon">🇻🇳</span>
+                            <span class="weekly-summary-label">Vietnamese</span>
+                        </div>
+                        <div class="weekly-summary-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="weeklyVietnameseBar" style="width: 0%; background: #DA251D;"></div>
+                            </div>
+                            <span class="weekly-summary-value"><span id="weeklyVietnameseHours">0</span>h / <span id="weeklyVietnameseTarget">7</span>h</span>
+                        </div>
+                    </div>
+                    <div class="weekly-summary-item">
+                        <div class="weekly-summary-header">
+                            <span class="weekly-summary-icon">💰</span>
+                            <span class="weekly-summary-label">Income</span>
+                        </div>
+                        <div class="weekly-summary-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="weeklyIncomeBar" style="width: 0%; background: var(--color-success);"></div>
+                            </div>
+                            <span class="weekly-summary-value" id="weeklyIncomeValue">--</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Pace Alert -->
+                <div id="paceAlert" class="alert alert-info mt-16" style="display: none;">
+                    <span id="paceMessage"></span>
+                </div>
+            </div>
+
+            <!-- Main Grid -->
+            <div class="dashboard-grid">
+                <!-- Vietnamese Streak Tracker (Feature 3) -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><span class="card-icon">🔥</span> Vietnamese Streak</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('vietnameseModal')">+ Log</button>
+                    </div>
+                    <div class="streak-display">
+                        <span class="streak-fire">🔥</span>
+                        <span class="streak-count" id="streakCount">0</span>
+                        <span class="streak-label">day streak</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Total hours</span>
+                        <span class="metric-value"><span id="vietnameseTotalHours">0</span>h / 600h</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="vietnameseProgressBar" style="width: 0%"></div>
+                    </div>
+                    <div class="week-calendar" id="weekCalendar">
+                        <!-- Generated by JS -->
+                    </div>
+                    <div id="pacingAlert" class="alert alert-warning mt-16" style="display: none;">
+                        <span id="pacingMessage"></span>
+                    </div>
+                </div>
+
+                <!-- Python Learning -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><span class="card-icon">🐍</span> Python Learning</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('pythonModal')">+ Log</button>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Total hours</span>
+                        <span class="metric-value"><span id="pythonTotalHours">0</span>h</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">This week</span>
+                        <span class="metric-value"><span id="pythonWeekDisplay">0</span>h / <span id="pythonTargetDisplay">8</span>h</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="pythonWeekBar" style="width: 0%"></div>
+                    </div>
+                    <div id="pythonSessionsList" class="mt-16">
+                        <!-- Recent sessions -->
+                    </div>
+                </div>
+
+                <!-- Freelance Income -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><span class="card-icon">💼</span> Freelance Projects</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('freelanceModal')">+ Log</button>
+                    </div>
+                    <div class="stats-row mb-16">
+                        <div class="stat-card">
+                            <div class="stat-value" id="freelanceTotal">--</div>
+                            <div class="stat-label">Total Earned</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value"><span id="projectCount">0</span></div>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgRate">--</div>
+                            <div class="stat-label">Avg/Hour</div>
+                        </div>
+                    </div>
+                    <div id="freelanceList">
+                        <!-- Projects list -->
+                    </div>
+                </div>
+
+                <!-- Milestones -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><span class="card-icon">🎯</span> Milestones</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openModal('milestoneModal')">+ Add</button>
+                    </div>
+                    <div class="timeline" id="milestonesTimeline">
+                        <!-- Milestones -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Review Section (Feature 5) -->
+            <div class="card weekly-review-card" id="weeklyReviewCard" style="display: none;">
+                <div class="card-header">
+                    <h2 class="card-title"><span class="card-icon">📊</span> Weekly Review</h2>
+                    <span id="weeklyReviewDate"></span>
+                </div>
+                <div id="weeklyReviewContent">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="card mt-24">
+                <div class="card-header">
+                    <h2 class="card-title"><span class="card-icon">📝</span> Notes</h2>
+                    <button class="btn btn-primary btn-sm" onclick="openModal('noteModal')">+ Add</button>
+                </div>
+                <div id="notesList">
+                    <!-- Notes list -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Vietnamese Session Modal -->
+    <div id="vietnameseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Vietnamese Practice</h3>
+                <button class="modal-close" onclick="closeModal('vietnameseModal')">&times;</button>
+            </div>
+            <form id="vietnameseForm">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="vnDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="vnType" class="form-control">
+                        <option value="duolingo">Duolingo</option>
+                        <option value="podcast">VietnamesePod101</option>
+                        <option value="tutoring">italki Tutoring</option>
+                        <option value="ling">Ling App</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Minutes</label>
+                    <input type="number" id="vnMinutes" class="form-control" min="1" placeholder="30" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Focus Area</label>
+                    <input type="text" id="vnFocus" class="form-control" placeholder="e.g., Greetings, Numbers">
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Log Practice</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Python Session Modal -->
+    <div id="pythonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Python Session</h3>
+                <button class="modal-close" onclick="closeModal('pythonModal')">&times;</button>
+            </div>
+            <form id="pythonForm">
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="pyDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hours</label>
+                    <input type="number" id="pyHours" class="form-control" step="0.5" min="0.5" placeholder="2" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Topic</label>
+                    <input type="text" id="pyTopic" class="form-control" placeholder="e.g., Pandas DataFrames" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="pyNotes" class="form-control" placeholder="What did you learn?"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Log Session</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Freelance Project Modal -->
+    <div id="freelanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Freelance Project</h3>
+                <button class="modal-close" onclick="closeModal('freelanceModal')">&times;</button>
+            </div>
+            <form id="freelanceForm">
+                <div class="form-group">
+                    <label class="form-label">Project Title</label>
+                    <input type="text" id="flTitle" class="form-control" placeholder="e.g., Data Analysis for Startup" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="flDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount Earned</label>
+                    <div class="input-with-currency">
+                        <input type="number" id="flAmount" class="form-control" step="0.01" min="0" placeholder="100" required>
+                        <select id="flCurrency" class="form-control currency-select">
+                            <option value="RON">RON</option>
+                            <option value="EUR" selected>EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="VND">VND</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hours Spent</label>
+                    <input type="number" id="flHours" class="form-control" step="0.5" min="0.5" placeholder="5" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Platform</label>
+                    <select id="flPlatform" class="form-control">
+                        <option value="upwork">Upwork</option>
+                        <option value="fiverr">Fiverr</option>
+                        <option value="direct">Direct Client</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Log Project</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Milestone Modal -->
+    <div id="milestoneModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Milestone</h3>
+                <button class="modal-close" onclick="closeModal('milestoneModal')">&times;</button>
+            </div>
+            <form id="milestoneForm">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="msTitle" class="form-control" placeholder="e.g., Complete Python Basics" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Target Date</label>
+                    <input type="date" id="msDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="msCategory" class="form-control">
+                        <option value="relocation">Relocation</option>
+                        <option value="python">Python</option>
+                        <option value="vietnamese">Vietnamese</option>
+                        <option value="freelance">Freelance</option>
+                        <option value="financial">Financial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="msNotes" class="form-control" placeholder="Additional details..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Add Milestone</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Note</h3>
+                <button class="modal-close" onclick="closeModal('noteModal')">&times;</button>
+            </div>
+            <form id="noteForm">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="ntTitle" class="form-control" placeholder="e.g., Hanoi Neighborhoods" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="ntCategory" class="form-control">
+                        <option value="general">General</option>
+                        <option value="relocation">Relocation</option>
+                        <option value="financial">Financial</option>
+                        <option value="learning">Learning</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Content</label>
+                    <textarea id="ntContent" class="form-control" placeholder="Write your note..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Save Note</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">
+        <p>Hanoi Relocation Dashboard</p>
+    </footer>
+
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/currency.js"></script>
+    <script>
+        // State
+        let dashboardData = null;
+        let stats = null;
+
+        // Check auth and load data
+        (async function init() {
+            await Currency.init();
+            await loadDashboard();
+            await loadRecommendations();
+            setDefaultDates();
+            checkWeeklyReview();
+
+            // Listen for currency changes
+            window.addEventListener('currencyChanged', () => {
+                renderDashboard();
+                renderWeeklySummary();
+            });
+        })();
+
+        let recommendations = null;
+
+        async function loadRecommendations() {
+            try {
+                const response = await fetch('/api/dashboard.php?action=recommendations');
+                recommendations = await response.json();
+                renderWeeklySummary();
+            } catch (error) {
+                console.error('Failed to load recommendations:', error);
+            }
+        }
+
+        function renderWeeklySummary() {
+            if (!recommendations) return;
+
+            const summary = recommendations.weekly_summary;
+            const pace = recommendations.pace;
+
+            // Update grade
+            const gradeEl = document.getElementById('weeklyGrade');
+            gradeEl.textContent = summary.grade;
+            gradeEl.className = 'weekly-grade grade-' + summary.grade.toLowerCase();
+
+            // Python progress
+            document.getElementById('weeklyPythonHours').textContent = summary.python_hours;
+            document.getElementById('weeklyPythonTarget').textContent = summary.python_target;
+            document.getElementById('weeklyPythonBar').style.width = summary.python_percent + '%';
+
+            // Vietnamese progress
+            document.getElementById('weeklyVietnameseHours').textContent = summary.vietnamese_hours;
+            document.getElementById('weeklyVietnameseTarget').textContent = summary.vietnamese_target;
+            document.getElementById('weeklyVietnameseBar').style.width = summary.vietnamese_percent + '%';
+
+            // Income progress
+            document.getElementById('weeklyIncomeValue').textContent =
+                Currency.formatFromRon(summary.income_current) + ' / ' + Currency.formatFromRon(summary.income_target);
+            document.getElementById('weeklyIncomeBar').style.width = summary.income_percent + '%';
+
+            // Pace alert
+            const paceAlert = document.getElementById('paceAlert');
+            if (!pace.on_track) {
+                paceAlert.style.display = 'flex';
+                document.getElementById('paceMessage').textContent =
+                    `To reach B1 Vietnamese by your target date, you need ${pace.vietnamese_required_weekly}h/week (currently targeting ${pace.vietnamese_current_target}h).`;
+            } else {
+                paceAlert.style.display = 'none';
+            }
+        }
+
+        // Load all dashboard data
+        async function loadDashboard() {
+            try {
+                [dashboardData, stats] = await Promise.all([
+                    API.dashboard.getAll(),
+                    API.dashboard.getStats()
+                ]);
+                renderDashboard();
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        // Render dashboard
+        function renderDashboard() {
+            if (!stats) return;
+
+            // Days remaining
+            const daysRemaining = stats.timeline.daysRemaining;
+            document.getElementById('daysRemaining').textContent = daysRemaining;
+
+            // Income calculator (amounts stored in RON, convert for display)
+            const incomeTargetInRon = stats.freelance.incomeTarget;
+            const incomeThisMonthInRon = stats.freelance.incomeThisMonth;
+            const incomeGapInRon = Math.max(0, incomeTargetInRon - incomeThisMonthInRon);
+
+            document.getElementById('incomeTargetDisplay').textContent = Currency.formatFromRon(incomeTargetInRon);
+            document.getElementById('incomeGap').textContent = Currency.formatFromRon(incomeGapInRon);
+            document.getElementById('currentIncome').textContent = Currency.formatFromRon(incomeThisMonthInRon);
+
+            const today = new Date();
+            const daysLeftMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate();
+            document.getElementById('daysLeftMonth').textContent = daysLeftMonth;
+
+            // Income suggestions (convert amounts for display)
+            const suggestions = [];
+            if (incomeGapInRon > 0) {
+                const avgRateInRon = stats.freelance.avgHourlyRate || 200; // ~40 EUR in RON
+                const incomeGapDisplay = Currency.fromRon(incomeGapInRon);
+                const project400InRon = 2000; // ~400 EUR
+                const gig150InRon = 750; // ~150 EUR
+
+                suggestions.push(`${Math.ceil(incomeGapInRon / project400InRon)} projects @ ${Currency.formatFromRon(project400InRon)} each`);
+                suggestions.push(`${Math.ceil(incomeGapInRon / avgRateInRon)} hours @ ${Currency.formatFromRon(avgRateInRon)}/hr`);
+                suggestions.push(`${Math.ceil(incomeGapInRon / gig150InRon)} small gigs @ ${Currency.formatFromRon(gig150InRon)} each`);
+            } else {
+                suggestions.push('Target achieved this month! 🎉');
+            }
+            document.getElementById('incomeSuggestions').innerHTML = suggestions.map(s => `<li>• ${s}</li>`).join('');
+
+            // Quick stats (savings in RON)
+            document.getElementById('savingsDisplay').textContent = Currency.formatFromRon(stats.financial.savings);
+            document.getElementById('runway').textContent = stats.financial.runway;
+            document.getElementById('pythonHoursWeek').textContent = stats.python.thisWeek;
+            document.getElementById('pythonTarget').textContent = stats.python.weeklyTarget;
+            document.getElementById('vietnameseHoursWeek').textContent = stats.vietnamese.thisWeek;
+            document.getElementById('vietnameseTarget').textContent = stats.vietnamese.weeklyTarget;
+            document.getElementById('learningProgress').textContent = stats.learningPath.percentage;
+
+            // Vietnamese tracker
+            document.getElementById('streakCount').textContent = stats.vietnamese.streak;
+            document.getElementById('vietnameseTotalHours').textContent = stats.vietnamese.totalHours;
+            const vnProgress = (stats.vietnamese.totalHours / 600) * 100;
+            document.getElementById('vietnameseProgressBar').style.width = `${Math.min(100, vnProgress)}%`;
+            renderWeekCalendar();
+
+            // Pacing alert
+            const weeksRemaining = Math.ceil(daysRemaining / 7);
+            const hoursNeeded = 600 - (stats.vietnamese.totalMinutes / 60);
+            const weeklyNeeded = hoursNeeded / weeksRemaining;
+            if (weeklyNeeded > stats.vietnamese.weeklyTarget) {
+                document.getElementById('pacingAlert').style.display = 'flex';
+                document.getElementById('pacingMessage').textContent =
+                    `At current pace, you need ${weeklyNeeded.toFixed(1)} hrs/week to reach B1 by October.`;
+            }
+
+            // Python tracker
+            document.getElementById('pythonTotalHours').textContent = stats.python.totalHours;
+            document.getElementById('pythonWeekDisplay').textContent = stats.python.thisWeek;
+            document.getElementById('pythonTargetDisplay').textContent = stats.python.weeklyTarget;
+            const pyWeekProgress = (stats.python.thisWeek / stats.python.weeklyTarget) * 100;
+            document.getElementById('pythonWeekBar').style.width = `${Math.min(100, pyWeekProgress)}%`;
+            renderPythonSessions();
+
+            // Freelance (amounts in RON)
+            document.getElementById('freelanceTotal').textContent = Currency.formatFromRon(stats.freelance.incomeTotal);
+            document.getElementById('projectCount').textContent = stats.freelance.totalProjects;
+            document.getElementById('avgRate').textContent = Currency.formatFromRon(stats.freelance.avgHourlyRate);
+            renderFreelanceProjects();
+
+            // Milestones
+            renderMilestones();
+
+            // Notes
+            renderNotes();
+        }
+
+        // Render week calendar for streak
+        function renderWeekCalendar() {
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const today = new Date();
+            const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0
+
+            const sessions = dashboardData?.vietnameseSessions || [];
+            const sessionDates = new Set(sessions.map(s => s.session_date));
+
+            let html = '';
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - dayOfWeek + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = i === dayOfWeek;
+                const isCompleted = sessionDates.has(dateStr);
+                const isPast = i < dayOfWeek;
+
+                html += `
+                    <div class="week-day ${isCompleted ? 'completed' : ''} ${isToday ? 'today' : ''}">
+                        <span class="week-day-label">${days[i]}</span>
+                        <span class="week-day-status">${isCompleted ? '✓' : (isPast ? '○' : '·')}</span>
+                    </div>
+                `;
+            }
+            document.getElementById('weekCalendar').innerHTML = html;
+        }
+
+        // Render Python sessions
+        function renderPythonSessions() {
+            const sessions = (dashboardData?.pythonSessions || []).slice(0, 5);
+            if (sessions.length === 0) {
+                document.getElementById('pythonSessionsList').innerHTML =
+                    '<p class="text-secondary text-sm">No sessions logged yet.</p>';
+                return;
+            }
+
+            const html = sessions.map(s => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <h4>${s.topic}</h4>
+                        <p>${formatDate(s.session_date)} • ${s.hours}h</p>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('pythonSessionsList').innerHTML = html;
+        }
+
+        // Render freelance projects
+        function renderFreelanceProjects() {
+            const projects = (dashboardData?.freelanceProjects || []).slice(0, 5);
+            if (projects.length === 0) {
+                document.getElementById('freelanceList').innerHTML =
+                    '<p class="text-secondary text-sm">No projects logged yet. Start building your portfolio!</p>';
+                return;
+            }
+
+            const html = projects.map(p => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <h4>${p.title}</h4>
+                        <p>${formatDate(p.project_date)} • ${Currency.formatFromRon(parseFloat(p.amount))} • ${p.hours}h • ${p.platform}</p>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteProject(${p.id})">×</button>
+                </div>
+            `).join('');
+            document.getElementById('freelanceList').innerHTML = html;
+        }
+
+        // Render milestones
+        function renderMilestones() {
+            const milestones = dashboardData?.milestones || [];
+            if (milestones.length === 0) {
+                document.getElementById('milestonesTimeline').innerHTML =
+                    '<p class="text-secondary text-sm">No milestones yet. Add one to get started!</p>';
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const html = milestones.map(m => {
+                const isOverdue = !m.completed && m.target_date < today;
+                return `
+                    <div class="timeline-item ${m.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}">
+                        <h4>${m.title}</h4>
+                        <p>${formatDate(m.target_date)} • ${m.category}</p>
+                        ${m.notes ? `<p>${m.notes}</p>` : ''}
+                        <div class="flex gap-8 mt-8">
+                            ${!m.completed ? `<button class="btn btn-sm btn-secondary" onclick="completeMilestone(${m.id})">Complete</button>` : ''}
+                            <button class="btn btn-sm btn-ghost" onclick="deleteMilestone(${m.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('milestonesTimeline').innerHTML = html;
+        }
+
+        // Render notes
+        function renderNotes() {
+            const notes = (dashboardData?.notes || []).slice(0, 5);
+            if (notes.length === 0) {
+                document.getElementById('notesList').innerHTML =
+                    '<p class="text-secondary text-sm">No notes yet.</p>';
+                return;
+            }
+
+            const html = notes.map(n => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <h4>${n.title}</h4>
+                        <p>${n.category} • ${formatDate(n.created_at)}</p>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteNote(${n.id})">×</button>
+                </div>
+            `).join('');
+            document.getElementById('notesList').innerHTML = html;
+        }
+
+        // Check if weekly review needed
+        function checkWeeklyReview() {
+            const today = new Date();
+            if (today.getDay() === 0) { // Sunday
+                document.getElementById('weeklyReviewCard').style.display = 'block';
+                renderWeeklyReview();
+            }
+        }
+
+        // Render weekly review
+        function renderWeeklyReview() {
+            if (!stats) return;
+
+            const pyScore = Math.min(100, (stats.python.thisWeek / stats.python.weeklyTarget) * 100);
+            const vnScore = Math.min(100, (stats.vietnamese.thisWeek / stats.vietnamese.weeklyTarget) * 100);
+            const incomeScore = Math.min(100, (stats.freelance.incomeThisMonth / (stats.freelance.incomeTarget / 4)) * 100);
+            const overallScore = Math.round((pyScore + vnScore + incomeScore) / 3);
+
+            let scoreClass = 'good';
+            if (overallScore < 70) scoreClass = 'warning';
+            if (overallScore < 50) scoreClass = 'danger';
+
+            document.getElementById('weeklyReviewDate').textContent = `Week of ${formatDate(getWeekStart())}`;
+            document.getElementById('weeklyReviewContent').innerHTML = `
+                <div class="review-metric">
+                    <span class="review-metric-label">Python learning</span>
+                    <div class="review-metric-values">
+                        <span class="review-metric-target">Target: ${stats.python.weeklyTarget}h</span>
+                        <span class="review-metric-actual">${stats.python.thisWeek}h</span>
+                        <span class="review-metric-status">${pyScore >= 100 ? '✓' : '⚠️'}</span>
+                    </div>
+                </div>
+                <div class="review-metric">
+                    <span class="review-metric-label">Vietnamese practice</span>
+                    <div class="review-metric-values">
+                        <span class="review-metric-target">Target: ${stats.vietnamese.weeklyTarget}h</span>
+                        <span class="review-metric-actual">${stats.vietnamese.thisWeek}h</span>
+                        <span class="review-metric-status">${vnScore >= 100 ? '✓' : '⚠️'}</span>
+                    </div>
+                </div>
+                <div class="review-metric">
+                    <span class="review-metric-label">Freelance income</span>
+                    <div class="review-metric-values">
+                        <span class="review-metric-target">Target: ${Currency.formatFromRon(stats.freelance.incomeTarget / 4)}</span>
+                        <span class="review-metric-actual">${Currency.formatFromRon(stats.freelance.incomeThisMonth / 4)}</span>
+                        <span class="review-metric-status">${incomeScore >= 100 ? '✓' : '⚠️'}</span>
+                    </div>
+                </div>
+                <div class="review-score">
+                    <div class="review-score-value ${scoreClass}">${overallScore}%</div>
+                    <p class="text-secondary mt-8">${getScoreMessage(overallScore)}</p>
+                </div>
+            `;
+        }
+
+        function getScoreMessage(score) {
+            if (score >= 90) return 'Excellent week! Keep up the momentum.';
+            if (score >= 70) return 'Good progress. Stay consistent.';
+            if (score >= 50) return 'Needs attention. Review your priorities.';
+            return 'Behind schedule. Time to refocus.';
+        }
+
+        function getWeekStart() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(today.setDate(diff)).toISOString().split('T')[0];
+        }
+
+        // Modal functions
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Close modal on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Set default dates
+        function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0];
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                if (!input.value) input.value = today;
+            });
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        // Form handlers
+        document.getElementById('vietnameseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await API.vietnamese.create({
+                    date: document.getElementById('vnDate').value,
+                    minutes: parseInt(document.getElementById('vnMinutes').value),
+                    type: document.getElementById('vnType').value,
+                    focus: document.getElementById('vnFocus').value
+                });
+                closeModal('vietnameseModal');
+                e.target.reset();
+                setDefaultDates();
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to save: ' + error.message);
+            }
+        });
+
+        document.getElementById('pythonForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await API.python.create({
+                    date: document.getElementById('pyDate').value,
+                    hours: parseFloat(document.getElementById('pyHours').value),
+                    topic: document.getElementById('pyTopic').value,
+                    notes: document.getElementById('pyNotes').value
+                });
+                closeModal('pythonModal');
+                e.target.reset();
+                setDefaultDates();
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to save: ' + error.message);
+            }
+        });
+
+        document.getElementById('freelanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const amount = parseFloat(document.getElementById('flAmount').value);
+                const currency = document.getElementById('flCurrency').value;
+                // Convert amount to RON for storage
+                const amountInRon = Currency.convertToRon(amount, currency);
+
+                await API.freelance.create({
+                    title: document.getElementById('flTitle').value,
+                    date: document.getElementById('flDate').value,
+                    amount: amountInRon,
+                    hours: parseFloat(document.getElementById('flHours').value),
+                    platform: document.getElementById('flPlatform').value
+                });
+                closeModal('freelanceModal');
+                e.target.reset();
+                setDefaultDates();
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to save: ' + error.message);
+            }
+        });
+
+        document.getElementById('milestoneForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await API.milestones.create({
+                    title: document.getElementById('msTitle').value,
+                    target_date: document.getElementById('msDate').value,
+                    category: document.getElementById('msCategory').value,
+                    notes: document.getElementById('msNotes').value
+                });
+                closeModal('milestoneModal');
+                e.target.reset();
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to save: ' + error.message);
+            }
+        });
+
+        document.getElementById('noteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await API.notes.create({
+                    title: document.getElementById('ntTitle').value,
+                    category: document.getElementById('ntCategory').value,
+                    content: document.getElementById('ntContent').value
+                });
+                closeModal('noteModal');
+                e.target.reset();
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to save: ' + error.message);
+            }
+        });
+
+        // Delete handlers
+        async function deleteProject(id) {
+            if (!confirm('Delete this project?')) return;
+            try {
+                await API.freelance.delete(id);
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to delete: ' + error.message);
+            }
+        }
+
+        async function deleteMilestone(id) {
+            if (!confirm('Delete this milestone?')) return;
+            try {
+                await API.milestones.delete(id);
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to delete: ' + error.message);
+            }
+        }
+
+        async function completeMilestone(id) {
+            try {
+                await API.milestones.toggleComplete(id, true);
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to update: ' + error.message);
+            }
+        }
+
+        async function deleteNote(id) {
+            if (!confirm('Delete this note?')) return;
+            try {
+                await API.notes.delete(id);
+                await loadDashboard();
+            } catch (error) {
+                alert('Failed to delete: ' + error.message);
+            }
+        }
+
+        // Logout
+        // (Login is not required in public dashboard mode)
+    </script>
+</body>
+</html>

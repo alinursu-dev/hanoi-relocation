@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Today - Hanoi Relocation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .today-hero {
+            background: linear-gradient(135deg, var(--color-teal-500), var(--color-teal-700));
+            color: white;
+            padding: var(--space-32);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-24);
+            text-align: center;
+        }
+
+        .today-date {
+            font-size: var(--font-size-lg);
+            opacity: 0.9;
+            margin-bottom: var(--space-8);
+        }
+
+        .today-countdown {
+            font-size: var(--font-size-4xl);
+            font-weight: 700;
+            margin-bottom: var(--space-8);
+        }
+
+        .today-motivation {
+            font-size: var(--font-size-lg);
+            opacity: 0.95;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* Smart Focus Card */
+        .smart-focus-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            margin-bottom: var(--space-24);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .smart-focus-card.priority-urgent {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        }
+
+        .smart-focus-card.priority-high {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .smart-focus-card.priority-medium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .smart-focus-card.priority-low {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .smart-focus-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-12);
+            margin-bottom: var(--space-12);
+        }
+
+        .smart-focus-icon {
+            font-size: 32px;
+        }
+
+        .smart-focus-label {
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .smart-focus-reason {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-8);
+            line-height: 1.3;
+        }
+
+        .smart-focus-suggestion {
+            font-size: var(--font-size-base);
+            opacity: 0.9;
+        }
+
+        .smart-focus-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .focus-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-24);
+            margin-bottom: var(--space-24);
+        }
+
+        @media (max-width: 768px) {
+            .focus-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .focus-card {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            transition: all var(--transition-fast);
+        }
+
+        .focus-card.python {
+            border-color: #3572A5;
+        }
+
+        .focus-card.vietnamese {
+            border-color: #DA251D;
+        }
+
+        .focus-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-16);
+        }
+
+        .focus-card-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-12);
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+        }
+
+        .focus-card-title .icon {
+            font-size: 28px;
+        }
+
+        .focus-progress {
+            margin-bottom: var(--space-20);
+        }
+
+        .focus-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-8);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .focus-progress-value {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .focus-progress-target {
+            font-size: var(--font-size-base);
+            color: var(--color-text-secondary);
+        }
+
+        .timer-display {
+            text-align: center;
+            padding: var(--space-24);
+            background: var(--color-background);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-16);
+        }
+
+        .timer-time {
+            font-size: 3rem;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            color: var(--color-text);
+            margin-bottom: var(--space-12);
+        }
+
+        .timer-time.running {
+            color: var(--color-primary);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: var(--space-12);
+            justify-content: center;
+        }
+
+        .timer-btn {
+            padding: var(--space-12) var(--space-24);
+            border-radius: var(--radius-full);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .timer-btn-start {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .timer-btn-start:hover {
+            background: #16a34a;
+        }
+
+        .timer-btn-pause {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .timer-btn-pause:hover {
+            background: #d97706;
+        }
+
+        .timer-btn-stop {
+            background: var(--color-error);
+            color: white;
+        }
+
+        .timer-btn-stop:hover {
+            background: #dc2626;
+        }
+
+        .timer-btn-reset {
+            background: var(--color-border);
+            color: var(--color-text);
+        }
+
+        .quick-log {
+            margin-top: var(--space-16);
+            padding-top: var(--space-16);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .quick-log-title {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-12);
+        }
+
+        .quick-log-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-8);
+        }
+
+        .quick-log-btn {
+            padding: var(--space-8) var(--space-16);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .quick-log-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .quick-log-btn.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+
+        .today-sessions {
+            margin-top: var(--space-16);
+        }
+
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-12);
+            background: var(--color-background);
+            border-radius: var(--radius-base);
+            margin-bottom: var(--space-8);
+            font-size: var(--font-size-sm);
+        }
+
+        .session-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-12);
+        }
+
+        .session-topic {
+            color: var(--color-text);
+        }
+
+        .session-duration {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .session-delete {
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            padding: var(--space-4);
+        }
+
+        .session-delete:hover {
+            color: var(--color-error);
+        }
+
+        .income-card {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            margin-bottom: var(--space-24);
+        }
+
+        .income-progress-ring {
+            display: flex;
+            align-items: center;
+            gap: var(--space-24);
+        }
+
+        .ring-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .ring-container svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring-background {
+            fill: none;
+            stroke: var(--color-border);
+            stroke-width: 12;
+        }
+
+        .ring-progress {
+            fill: none;
+            stroke: var(--color-primary);
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-percentage {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .ring-label {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-secondary);
+        }
+
+        .income-details {
+            flex: 1;
+        }
+
+        .income-amount {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .income-target {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-12);
+        }
+
+        .income-gap {
+            padding: var(--space-12);
+            background: var(--color-background);
+            border-radius: var(--radius-base);
+        }
+
+        .milestones-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+        }
+
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-12);
+            padding: var(--space-12) 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .milestone-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .milestone-date {
+            background: var(--color-background);
+            padding: var(--space-8) var(--space-12);
+            border-radius: var(--radius-base);
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .milestone-date-day {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .milestone-date-month {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+        }
+
+        .week-progress {
+            margin-top: var(--space-24);
+        }
+
+        .week-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-12);
+        }
+
+        .week-progress-title {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .week-progress-value {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .reflection-prompt {
+            background: rgba(33, 128, 141, 0.1);
+            border: 1px solid var(--color-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-20);
+            margin-top: var(--space-24);
+        }
+
+        .reflection-prompt h4 {
+            color: var(--color-primary);
+            margin-bottom: var(--space-8);
+        }
+
+        .reflection-prompt p {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+    </style>
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="container">
+            <div>
+                <h1>Today's Focus</h1>
+                <p>One day at a time</p>
+            </div>
+            <nav class="dashboard-nav">
+                <a href="/today" class="active">Today</a>
+                <a href="/">Dashboard</a>
+                <a href="/learning-path">Learning</a>
+                <a href="/settings">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container">
+            <!-- Hero Section -->
+            <div class="today-hero">
+                <div class="today-date" id="todayDate">Loading...</div>
+                <div class="today-countdown"><span id="daysRemaining">--</span> days to Hanoi</div>
+                <div class="today-motivation" id="motivation">Loading...</div>
+            </div>
+
+            <!-- Smart Focus Card -->
+            <div class="smart-focus-card" id="smartFocusCard">
+                <div class="smart-focus-header">
+                    <span class="smart-focus-icon" id="focusIcon">🎯</span>
+                    <span class="smart-focus-label">Today's Focus</span>
+                </div>
+                <div class="smart-focus-reason" id="focusReason">Loading...</div>
+                <div class="smart-focus-suggestion" id="focusSuggestion">Loading recommendation...</div>
+            </div>
+
+            <!-- Focus Cards Grid -->
+            <div class="focus-grid">
+                <!-- Python Focus Card -->
+                <div class="focus-card python">
+                    <div class="focus-card-header">
+                        <div class="focus-card-title">
+                            <span class="icon">🐍</span>
+                            Python Learning
+                        </div>
+                        <span class="badge" id="pythonBadge">--</span>
+                    </div>
+
+                    <div class="focus-progress">
+                        <div class="focus-progress-header">
+                            <span>Today's Progress</span>
+                            <span><span id="pythonTodayHours">0</span>h / <span id="pythonDailyTarget">1.1</span>h target</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="pythonDailyProgress" style="width: 0%; background: #3572A5;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Timer -->
+                    <div class="timer-display">
+                        <div class="timer-time" id="pythonTimer">00:00:00</div>
+                        <div class="timer-controls">
+                            <button class="timer-btn timer-btn-start" id="pythonStart" onclick="startTimer('python')">Start</button>
+                            <button class="timer-btn timer-btn-pause" id="pythonPause" onclick="pauseTimer('python')" style="display: none;">Pause</button>
+                            <button class="timer-btn timer-btn-stop" id="pythonStop" onclick="stopTimer('python')" style="display: none;">Save</button>
+                            <button class="timer-btn timer-btn-reset" id="pythonReset" onclick="resetTimer('python')" style="display: none;">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Log -->
+                    <div class="quick-log">
+                        <div class="quick-log-title">Quick log (without timer):</div>
+                        <div class="quick-log-buttons">
+                            <button class="quick-log-btn" onclick="quickLog('python', 0.5)">+30min</button>
+                            <button class="quick-log-btn" onclick="quickLog('python', 1)">+1hr</button>
+                            <button class="quick-log-btn" onclick="quickLog('python', 1.5)">+1.5hr</button>
+                            <button class="quick-log-btn" onclick="quickLog('python', 2)">+2hr</button>
+                        </div>
+                    </div>
+
+                    <!-- Today's Sessions -->
+                    <div class="today-sessions" id="pythonSessions">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Week Progress -->
+                    <div class="week-progress">
+                        <div class="week-progress-header">
+                            <span class="week-progress-title">This Week</span>
+                            <span class="week-progress-value"><span id="pythonWeekHours">0</span>h / <span id="pythonWeekTarget">8</span>h</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="pythonWeekProgress" style="width: 0%; background: #3572A5;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vietnamese Focus Card -->
+                <div class="focus-card vietnamese">
+                    <div class="focus-card-header">
+                        <div class="focus-card-title">
+                            <span class="icon">🇻🇳</span>
+                            Vietnamese Practice
+                        </div>
+                        <span class="badge" id="vietnameseBadge">--</span>
+                    </div>
+
+                    <div class="focus-progress">
+                        <div class="focus-progress-header">
+                            <span>Today's Progress</span>
+                            <span><span id="vietnameseTodayMins">0</span>m / <span id="vietnameseDailyTarget">60</span>m target</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="vietnameseDailyProgress" style="width: 0%; background: #DA251D;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Timer -->
+                    <div class="timer-display">
+                        <div class="timer-time" id="vietnameseTimer">00:00:00</div>
+                        <div class="timer-controls">
+                            <button class="timer-btn timer-btn-start" id="vietnameseStart" onclick="startTimer('vietnamese')">Start</button>
+                            <button class="timer-btn timer-btn-pause" id="vietnamesePause" onclick="pauseTimer('vietnamese')" style="display: none;">Pause</button>
+                            <button class="timer-btn timer-btn-stop" id="vietnameseStop" onclick="stopTimer('vietnamese')" style="display: none;">Save</button>
+                            <button class="timer-btn timer-btn-reset" id="vietnameseReset" onclick="resetTimer('vietnamese')" style="display: none;">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Log -->
+                    <div class="quick-log">
+                        <div class="quick-log-title">Quick log (without timer):</div>
+                        <div class="quick-log-buttons">
+                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 15)">+15min</button>
+                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 30)">+30min</button>
+                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 45)">+45min</button>
+                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 60)">+1hr</button>
+                        </div>
+                    </div>
+
+                    <!-- Streak Display -->
+                    <div style="text-align: center; padding: var(--space-16); background: var(--color-background); border-radius: var(--radius-base); margin-top: var(--space-16);">
+                        <span style="font-size: 32px;">🔥</span>
+                        <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-warning);" id="streakCount">0</span>
+                        <span style="color: var(--color-text-secondary);">day streak</span>
+                    </div>
+
+                    <!-- Today's Sessions -->
+                    <div class="today-sessions" id="vietnameseSessions">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Week Progress -->
+                    <div class="week-progress">
+                        <div class="week-progress-header">
+                            <span class="week-progress-title">This Week</span>
+                            <span class="week-progress-value"><span id="vietnameseWeekHours">0</span>h / <span id="vietnameseWeekTarget">7</span>h</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="vietnameseWeekProgress" style="width: 0%; background: #DA251D;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Progress -->
+            <div class="income-card">
+                <div class="focus-card-header">
+                    <div class="focus-card-title">
+                        <span class="icon">💰</span>
+                        Monthly Income Progress
+                    </div>
+                </div>
+                <div class="income-progress-ring">
+                    <div class="ring-container">
+                        <svg width="120" height="120" viewBox="0 0 120 120">
+                            <circle class="ring-background" cx="60" cy="60" r="54"/>
+                            <circle class="ring-progress" id="incomeRing" cx="60" cy="60" r="54"
+                                stroke-dasharray="339.292" stroke-dashoffset="339.292"/>
+                        </svg>
+                        <div class="ring-text">
+                            <div class="ring-percentage" id="incomePercentage">0%</div>
+                            <div class="ring-label">of target</div>
+                        </div>
+                    </div>
+                    <div class="income-details">
+                        <div class="income-amount" id="incomeThisMonth">--</div>
+                        <div class="income-target">of <span id="incomeTarget">--</span> target</div>
+                        <div class="income-gap">
+                            <strong id="incomeGap">--</strong> remaining this month
+                            <br>
+                            <small class="text-secondary"><span id="daysLeftMonth">--</span> days left</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Milestones -->
+            <div class="milestones-card" id="milestonesSection">
+                <div class="focus-card-header">
+                    <div class="focus-card-title">
+                        <span class="icon">🎯</span>
+                        Coming Up This Week
+                    </div>
+                </div>
+                <div id="upcomingMilestones">
+                    <p class="text-secondary text-sm">No milestones this week</p>
+                </div>
+            </div>
+
+            <!-- Evening Reflection (show after 6 PM) -->
+            <div class="reflection-prompt" id="reflectionPrompt" style="display: none;">
+                <h4>Evening Reflection</h4>
+                <p>How did today go? What did you learn? What will you do differently tomorrow?</p>
+                <button class="btn btn-secondary mt-12" onclick="window.location.href='index.html'">
+                    Open Full Dashboard
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="dashboard-footer">
+        <p>Hanoi Relocation Dashboard</p>
+    </footer>
+
+    <!-- Topic Modal for Timer Sessions -->
+    <div class="modal" id="topicModal" style="display: none;">
+        <div class="modal-backdrop" onclick="closeTopicModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="topicModalTitle">What did you work on?</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Topic / Focus Area</label>
+                    <input type="text" id="sessionTopic" class="form-control" placeholder="e.g., Pandas basics, Vocabulary, etc.">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Duration</label>
+                    <input type="text" id="sessionDuration" class="form-control" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTopicModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTimerSession()">Save Session</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/currency.js"></script>
+    <script>
+        // Timer state
+        const timers = {
+            python: { running: false, paused: false, seconds: 0, interval: null },
+            vietnamese: { running: false, paused: false, seconds: 0, interval: null }
+        };
+
+        let todayData = null;
+        let currentTimerType = null;
+
+        // Initialize
+        (async function init() {
+            await Currency.init();
+            await loadTodayData();
+            await loadRecommendations();
+            renderUI();
+            showEveningReflection();
+
+            // Restore timers from localStorage
+            restoreTimerState();
+
+            // Listen for currency changes
+            window.addEventListener('currencyChanged', () => {
+                renderUI();
+            });
+        })();
+
+        async function loadRecommendations() {
+            try {
+                const response = await fetch('/api/dashboard.php?action=recommendations');
+                const data = await response.json();
+                renderSmartFocus(data);
+            } catch (error) {
+                console.error('Failed to load recommendations:', error);
+            }
+        }
+
+        function renderSmartFocus(data) {
+            const card = document.getElementById('smartFocusCard');
+            const focus = data.daily_focus;
+
+            // Set priority class
+            card.className = 'smart-focus-card priority-' + focus.priority;
+
+            // Update content
+            document.getElementById('focusIcon').textContent = focus.icon;
+            document.getElementById('focusReason').textContent = focus.reason;
+            document.getElementById('focusSuggestion').textContent = focus.suggestion;
+        }
+
+        async function loadTodayData() {
+            try {
+                todayData = await API.dashboard.getToday();
+            } catch (error) {
+                console.error('Failed to load today data:', error);
+            }
+        }
+
+        function renderUI() {
+            if (!todayData) return;
+
+            // Date and countdown
+            const date = new Date();
+            document.getElementById('todayDate').textContent = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('daysRemaining').textContent = todayData.daysRemaining;
+            document.getElementById('motivation').textContent = todayData.motivation;
+
+            // Python progress
+            const pyData = todayData.python;
+            document.getElementById('pythonTodayHours').textContent = pyData.todayHours.toFixed(1);
+            document.getElementById('pythonDailyTarget').textContent = pyData.dailyTarget;
+            document.getElementById('pythonDailyProgress').style.width = Math.min(100, (pyData.todayHours / pyData.dailyTarget) * 100) + '%';
+            document.getElementById('pythonWeekHours').textContent = pyData.weekHours.toFixed(1);
+            document.getElementById('pythonWeekTarget').textContent = pyData.weeklyTarget;
+            document.getElementById('pythonWeekProgress').style.width = Math.min(100, pyData.weekProgress) + '%';
+
+            // Python badge
+            const pyBadge = document.getElementById('pythonBadge');
+            if (pyData.todayHours >= pyData.dailyTarget) {
+                pyBadge.textContent = 'Done!';
+                pyBadge.className = 'badge badge-success';
+            } else {
+                pyBadge.textContent = `${(pyData.dailyTarget - pyData.todayHours).toFixed(1)}h left`;
+                pyBadge.className = 'badge badge-neutral';
+            }
+
+            // Vietnamese progress
+            const vnData = todayData.vietnamese;
+            document.getElementById('vietnameseTodayMins').textContent = vnData.todayMinutes;
+            document.getElementById('vietnameseDailyTarget').textContent = vnData.dailyTarget;
+            document.getElementById('vietnameseDailyProgress').style.width = Math.min(100, (vnData.todayMinutes / vnData.dailyTarget) * 100) + '%';
+            document.getElementById('vietnameseWeekHours').textContent = (vnData.weekMinutes / 60).toFixed(1);
+            document.getElementById('vietnameseWeekTarget').textContent = (vnData.weeklyTarget / 60).toFixed(0);
+            document.getElementById('vietnameseWeekProgress').style.width = Math.min(100, vnData.weekProgress) + '%';
+            document.getElementById('streakCount').textContent = vnData.streak;
+
+            // Vietnamese badge
+            const vnBadge = document.getElementById('vietnameseBadge');
+            if (vnData.todayMinutes >= vnData.dailyTarget) {
+                vnBadge.textContent = 'Done!';
+                vnBadge.className = 'badge badge-success';
+            } else {
+                vnBadge.textContent = `${vnData.dailyTarget - vnData.todayMinutes}m left`;
+                vnBadge.className = 'badge badge-neutral';
+            }
+
+            // Income progress (amounts in RON)
+            const incData = todayData.income;
+            document.getElementById('incomeThisMonth').textContent = Currency.formatFromRon(incData.thisMonth);
+            document.getElementById('incomeTarget').textContent = Currency.formatFromRon(incData.target);
+            document.getElementById('incomeGap').textContent = Currency.formatFromRon(incData.gap);
+            document.getElementById('incomePercentage').textContent = Math.min(100, incData.progress) + '%';
+
+            // Days left in month
+            const today = new Date();
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            document.getElementById('daysLeftMonth').textContent = lastDay.getDate() - today.getDate();
+
+            // Income ring
+            const ring = document.getElementById('incomeRing');
+            const circumference = 339.292;
+            const offset = circumference - (Math.min(100, incData.progress) / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+
+            // Render sessions
+            renderSessions('python', pyData.todaySessions);
+            renderSessions('vietnamese', vnData.todaySessions);
+
+            // Render milestones
+            renderMilestones(todayData.upcomingMilestones);
+        }
+
+        function renderSessions(type, sessions) {
+            const container = document.getElementById(`${type}Sessions`);
+
+            if (!sessions || sessions.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="quick-log-title">Today's sessions:</div>
+                ${sessions.map(s => `
+                    <div class="session-item">
+                        <div class="session-info">
+                            <span class="session-topic">${type === 'python' ? (s.topic || 'General') : (s.focus_area || s.session_type || 'Practice')}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: var(--space-12);">
+                            <span class="session-duration">${type === 'python' ? s.hours + 'h' : s.minutes + 'm'}</span>
+                            <span class="session-delete" onclick="deleteSession('${type}', ${s.id})">✕</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function renderMilestones(milestones) {
+            const container = document.getElementById('upcomingMilestones');
+
+            if (!milestones || milestones.length === 0) {
+                container.innerHTML = '<p class="text-secondary text-sm">No milestones this week. Great time to focus on learning!</p>';
+                return;
+            }
+
+            container.innerHTML = milestones.map(m => {
+                const date = new Date(m.target_date);
+                return `
+                    <div class="milestone-item">
+                        <div class="milestone-date">
+                            <div class="milestone-date-day">${date.getDate()}</div>
+                            <div class="milestone-date-month">${date.toLocaleDateString('en-US', { month: 'short' })}</div>
+                        </div>
+                        <div>
+                            <strong>${m.title}</strong>
+                            ${m.category ? `<span class="badge badge-neutral" style="margin-left: 8px;">${m.category}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Timer functions
+        function startTimer(type) {
+            const timer = timers[type];
+
+            if (timer.paused) {
+                timer.paused = false;
+            }
+
+            timer.running = true;
+            timer.interval = setInterval(() => {
+                timer.seconds++;
+                updateTimerDisplay(type);
+                saveTimerState();
+            }, 1000);
+
+            document.getElementById(`${type}Start`).style.display = 'none';
+            document.getElementById(`${type}Pause`).style.display = 'inline-block';
+            document.getElementById(`${type}Stop`).style.display = 'inline-block';
+            document.getElementById(`${type}Reset`).style.display = 'inline-block';
+            document.getElementById(`${type}Timer`).classList.add('running');
+        }
+
+        function pauseTimer(type) {
+            const timer = timers[type];
+            timer.running = false;
+            timer.paused = true;
+            clearInterval(timer.interval);
+
+            document.getElementById(`${type}Start`).style.display = 'inline-block';
+            document.getElementById(`${type}Start`).textContent = 'Resume';
+            document.getElementById(`${type}Pause`).style.display = 'none';
+            document.getElementById(`${type}Timer`).classList.remove('running');
+
+            saveTimerState();
+        }
+
+        function stopTimer(type) {
+            const timer = timers[type];
+
+            if (timer.seconds < 60) {
+                alert('Session too short (minimum 1 minute)');
+                return;
+            }
+
+            clearInterval(timer.interval);
+            timer.running = false;
+
+            // Show topic modal
+            currentTimerType = type;
+            document.getElementById('topicModalTitle').textContent =
+                type === 'python' ? 'What did you learn?' : 'What did you practice?';
+            document.getElementById('sessionDuration').value = formatTime(timer.seconds);
+            document.getElementById('topicModal').style.display = 'flex';
+        }
+
+        function resetTimer(type) {
+            const timer = timers[type];
+            clearInterval(timer.interval);
+            timer.running = false;
+            timer.paused = false;
+            timer.seconds = 0;
+
+            updateTimerDisplay(type);
+
+            document.getElementById(`${type}Start`).style.display = 'inline-block';
+            document.getElementById(`${type}Start`).textContent = 'Start';
+            document.getElementById(`${type}Pause`).style.display = 'none';
+            document.getElementById(`${type}Stop`).style.display = 'none';
+            document.getElementById(`${type}Reset`).style.display = 'none';
+            document.getElementById(`${type}Timer`).classList.remove('running');
+
+            clearTimerState(type);
+        }
+
+        function updateTimerDisplay(type) {
+            document.getElementById(`${type}Timer`).textContent = formatTime(timers[type].seconds);
+        }
+
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        async function saveTimerSession() {
+            const topic = document.getElementById('sessionTopic').value || 'General';
+            const timer = timers[currentTimerType];
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                if (currentTimerType === 'python') {
+                    const hours = Math.round((timer.seconds / 3600) * 100) / 100;
+                    await API.python.create({
+                        date: today,
+                        hours: hours,
+                        topic: topic
+                    });
+                } else {
+                    const minutes = Math.round(timer.seconds / 60);
+                    await API.vietnamese.create({
+                        date: today,
+                        minutes: minutes,
+                        type: 'practice',
+                        focus: topic
+                    });
+                }
+
+                closeTopicModal();
+                resetTimer(currentTimerType);
+                await loadTodayData();
+                renderUI();
+            } catch (error) {
+                alert('Failed to save session: ' + error.message);
+            }
+        }
+
+        function closeTopicModal() {
+            document.getElementById('topicModal').style.display = 'none';
+            document.getElementById('sessionTopic').value = '';
+        }
+
+        // Quick log functions
+        async function quickLog(type, amount) {
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                if (type === 'python') {
+                    await API.python.create({
+                        date: today,
+                        hours: amount,
+                        topic: 'Quick log'
+                    });
+                } else {
+                    await API.vietnamese.create({
+                        date: today,
+                        minutes: amount,
+                        type: 'practice',
+                        focus: 'Quick log'
+                    });
+                }
+
+                await loadTodayData();
+                renderUI();
+            } catch (error) {
+                alert('Failed to log session: ' + error.message);
+            }
+        }
+
+        async function deleteSession(type, id) {
+            if (!confirm('Delete this session?')) return;
+
+            try {
+                if (type === 'python') {
+                    await API.python.delete(id);
+                } else {
+                    await API.vietnamese.delete(id);
+                }
+
+                await loadTodayData();
+                renderUI();
+            } catch (error) {
+                alert('Failed to delete session: ' + error.message);
+            }
+        }
+
+        // Timer persistence
+        function saveTimerState() {
+            localStorage.setItem('today_timers', JSON.stringify({
+                python: { seconds: timers.python.seconds, running: timers.python.running, paused: timers.python.paused },
+                vietnamese: { seconds: timers.vietnamese.seconds, running: timers.vietnamese.running, paused: timers.vietnamese.paused },
+                timestamp: Date.now()
+            }));
+        }
+
+        function clearTimerState(type) {
+            const state = JSON.parse(localStorage.getItem('today_timers') || '{}');
+            if (state[type]) {
+                state[type] = { seconds: 0, running: false, paused: false };
+                localStorage.setItem('today_timers', JSON.stringify(state));
+            }
+        }
+
+        function restoreTimerState() {
+            const state = JSON.parse(localStorage.getItem('today_timers') || '{}');
+
+            // Only restore if saved today
+            if (state.timestamp) {
+                const savedDate = new Date(state.timestamp).toDateString();
+                const today = new Date().toDateString();
+
+                if (savedDate !== today) {
+                    localStorage.removeItem('today_timers');
+                    return;
+                }
+            }
+
+            ['python', 'vietnamese'].forEach(type => {
+                if (state[type] && state[type].seconds > 0) {
+                    timers[type].seconds = state[type].seconds;
+                    timers[type].paused = state[type].paused;
+                    updateTimerDisplay(type);
+
+                    if (state[type].running) {
+                        startTimer(type);
+                    } else if (state[type].paused) {
+                        // Show paused state
+                        document.getElementById(`${type}Start`).textContent = 'Resume';
+                        document.getElementById(`${type}Stop`).style.display = 'inline-block';
+                        document.getElementById(`${type}Reset`).style.display = 'inline-block';
+                    }
+                }
+            });
+        }
+
+        // Evening reflection
+        function showEveningReflection() {
+            const hour = new Date().getHours();
+            if (hour >= 18) {
+                document.getElementById('reflectionPrompt').style.display = 'block';
+            }
+        }
+
+        // (Login is not required in public dashboard mode)
+    </script>
+</body>
+</html>

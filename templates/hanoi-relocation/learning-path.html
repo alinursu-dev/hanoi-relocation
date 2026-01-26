@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Path - Hanoi Relocation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="container">
+            <div>
+                <h1>Python Learning Path</h1>
+                <p>From beginner to freelance-ready</p>
+            </div>
+            <nav class="dashboard-nav">
+                <a href="/today">Today</a>
+                <a href="/">Dashboard</a>
+                <a href="/learning-path" class="active">Learning</a>
+                <a href="/settings">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container">
+            <!-- Progress Overview -->
+            <div class="card mb-24">
+                <div class="card-header">
+                    <h2 class="card-title">Overall Progress</h2>
+                    <span class="badge badge-success" id="progressBadge">0% Complete</span>
+                </div>
+                <div class="progress-bar progress-bar-lg mb-16">
+                    <div class="progress-fill" id="overallProgress" style="width: 0%"></div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value" id="completedSkills">0</div>
+                        <div class="stat-label">Skills Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalSkills">0</div>
+                        <div class="stat-label">Total Skills</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalHours">0</div>
+                        <div class="stat-label">Hours Logged</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="currentPhase">1</div>
+                        <div class="stat-label">Current Phase</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning Phases -->
+            <div id="learningPhases">
+                <!-- Phase 1 -->
+                <div class="card mb-24 learning-phase" data-phase="1">
+                    <div class="learning-phase-header">
+                        <h3 class="learning-phase-title">Phase 1: Foundation (Months 1-3)</h3>
+                        <span class="learning-phase-progress" id="phase1Progress">0/5</span>
+                    </div>
+                    <p class="text-secondary text-sm mb-16">Master Python basics, syntax, and fundamental concepts</p>
+                    <div class="progress-bar mb-16">
+                        <div class="progress-fill" id="phase1Bar" style="width: 0%"></div>
+                    </div>
+                    <div id="phase1Skills">
+                        <!-- Skills rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Phase 2 -->
+                <div class="card mb-24 learning-phase" data-phase="2">
+                    <div class="learning-phase-header">
+                        <h3 class="learning-phase-title">Phase 2: Data & Automation (Months 4-6)</h3>
+                        <span class="learning-phase-progress" id="phase2Progress">0/4</span>
+                    </div>
+                    <p class="text-secondary text-sm mb-16">Learn data manipulation, visualization, and automation</p>
+                    <div class="progress-bar mb-16">
+                        <div class="progress-fill" id="phase2Bar" style="width: 0%"></div>
+                    </div>
+                    <div id="phase2Skills">
+                        <!-- Skills rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Phase 3 -->
+                <div class="card mb-24 learning-phase" data-phase="3">
+                    <div class="learning-phase-header">
+                        <h3 class="learning-phase-title">Phase 3: Freelance Ready (Months 7-10)</h3>
+                        <span class="learning-phase-progress" id="phase3Progress">0/4</span>
+                    </div>
+                    <p class="text-secondary text-sm mb-16">Build client-ready skills for freelance work</p>
+                    <div class="progress-bar mb-16">
+                        <div class="progress-fill" id="phase3Bar" style="width: 0%"></div>
+                    </div>
+                    <div id="phase3Skills">
+                        <!-- Skills rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Ideas -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Suggested Portfolio Projects</h2>
+                </div>
+                <p class="text-secondary text-sm mb-16">Based on your completed skills, here are projects to build:</p>
+                <div id="projectSuggestions" class="grid gap-16" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="dashboard-footer">
+        <p>Hanoi Relocation Dashboard | </p>
+    </footer>
+
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script>
+        let learningPath = [];
+        let pythonStats = null;
+
+        const projectIdeas = {
+            'file_io': { name: 'CSV Budget Analyzer', desc: 'Parse CSV files and generate budget reports' },
+            'pandas_basics': { name: 'Expense Report Generator', desc: 'Automate monthly expense reports with Pandas' },
+            'data_visualization': { name: 'Sales Dashboard', desc: 'Interactive charts for business metrics' },
+            'web_scraping': { name: 'Price Tracker', desc: 'Monitor product prices from e-commerce sites' },
+            'apis_json': { name: 'Currency Converter', desc: 'Real-time exchange rates API integration' },
+            'excel_automation': { name: 'Invoice Generator', desc: 'Create and format Excel invoices automatically' },
+            'pdf_generation': { name: 'Report Builder', desc: 'Generate PDF reports from data' },
+            'database_basics': { name: 'Client Database', desc: 'Track clients and projects in SQLite' }
+        };
+
+        (async function init() {
+            await loadData();
+            renderLearningPath();
+            renderProjectSuggestions();
+        })();
+
+        async function loadData() {
+            try {
+                const [lpData, stats] = await Promise.all([
+                    API.learningPath.getAll(),
+                    API.dashboard.getStats()
+                ]);
+                learningPath = lpData;
+                pythonStats = stats.python;
+            } catch (error) {
+                console.error('Failed to load data:', error);
+            }
+        }
+
+        function renderLearningPath() {
+            const phases = { 1: [], 2: [], 3: [] };
+            learningPath.forEach(skill => {
+                phases[skill.phase].push(skill);
+            });
+
+            let totalCompleted = 0;
+            let totalSkills = learningPath.length;
+
+            // Render each phase
+            [1, 2, 3].forEach(phase => {
+                const skills = phases[phase];
+                const completed = skills.filter(s => s.completed).length;
+                totalCompleted += completed;
+
+                document.getElementById(`phase${phase}Progress`).textContent = `${completed}/${skills.length}`;
+                document.getElementById(`phase${phase}Bar`).style.width = `${(completed / skills.length) * 100}%`;
+
+                const container = document.getElementById(`phase${phase}Skills`);
+                container.innerHTML = skills.map(skill => `
+                    <div class="skill-item" data-skill="${skill.skill_id}">
+                        <div class="skill-checkbox ${skill.completed ? 'completed' : ''}"
+                             onclick="toggleSkill('${skill.skill_id}', ${!skill.completed})">
+                            ${skill.completed ? '✓' : ''}
+                        </div>
+                        <div class="skill-content">
+                            <div class="skill-name ${skill.completed ? 'completed' : ''}">${skill.skill_name}</div>
+                            ${projectIdeas[skill.skill_id] ? `
+                                <div class="skill-project">
+                                    💡 Project: ${projectIdeas[skill.skill_id].name}
+                                </div>
+                            ` : ''}
+                            ${skill.project_url ? `
+                                <a href="${skill.project_url}" target="_blank" class="text-primary text-xs">
+                                    View on GitHub →
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            });
+
+            // Update overall stats
+            const percentage = Math.round((totalCompleted / totalSkills) * 100);
+            document.getElementById('progressBadge').textContent = `${percentage}% Complete`;
+            document.getElementById('overallProgress').style.width = `${percentage}%`;
+            document.getElementById('completedSkills').textContent = totalCompleted;
+            document.getElementById('totalSkills').textContent = totalSkills;
+            document.getElementById('totalHours').textContent = pythonStats?.totalHours || 0;
+
+            // Determine current phase
+            let currentPhase = 1;
+            if (phases[1].every(s => s.completed)) currentPhase = 2;
+            if (phases[2].every(s => s.completed)) currentPhase = 3;
+            document.getElementById('currentPhase').textContent = currentPhase;
+        }
+
+        function renderProjectSuggestions() {
+            const completedSkills = learningPath.filter(s => s.completed).map(s => s.skill_id);
+            const suggestions = [];
+
+            Object.entries(projectIdeas).forEach(([skillId, project]) => {
+                const skill = learningPath.find(s => s.skill_id === skillId);
+                if (skill && !skill.project_url) {
+                    suggestions.push({
+                        ...project,
+                        skillId,
+                        completed: completedSkills.includes(skillId)
+                    });
+                }
+            });
+
+            // Sort: completed skills first (ready to build), then by phase
+            suggestions.sort((a, b) => {
+                if (a.completed !== b.completed) return b.completed - a.completed;
+                return 0;
+            });
+
+            const container = document.getElementById('projectSuggestions');
+            if (suggestions.length === 0) {
+                container.innerHTML = '<p class="text-secondary">Complete skills to unlock project ideas!</p>';
+                return;
+            }
+
+            container.innerHTML = suggestions.slice(0, 6).map(project => `
+                <div class="card" style="padding: var(--space-16);">
+                    <h4 class="mb-8">${project.name}</h4>
+                    <p class="text-secondary text-sm mb-12">${project.desc}</p>
+                    ${project.completed ? `
+                        <span class="badge badge-success">Ready to Build</span>
+                    ` : `
+                        <span class="badge badge-neutral">Learn skill first</span>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        async function toggleSkill(skillId, completed) {
+            try {
+                await API.learningPath.updateSkill(skillId, completed);
+                const skill = learningPath.find(s => s.skill_id === skillId);
+                if (skill) skill.completed = completed;
+                renderLearningPath();
+                renderProjectSuggestions();
+            } catch (error) {
+                alert('Failed to update skill: ' + error.message);
+            }
+        }
+
+        // (Login is not required in public dashboard mode)
+    </script>
+</body>
+</html>

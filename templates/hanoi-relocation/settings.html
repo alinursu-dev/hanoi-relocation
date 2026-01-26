@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Hanoi Relocation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="container">
+            <div>
+                <h1>Settings</h1>
+                <p>Configure your dashboard</p>
+            </div>
+            <nav class="dashboard-nav">
+                <a href="/today">Today</a>
+                <a href="/">Dashboard</a>
+                <a href="/learning-path">Learning</a>
+                <a href="/settings" class="active">Settings</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <div class="container" style="max-width: 600px;">
+            <div id="alertContainer"></div>
+
+            <!-- Goals & Targets -->
+            <div class="card mb-24">
+                <div class="card-header">
+                    <h2 class="card-title">Goals & Targets</h2>
+                </div>
+                <form id="goalsForm">
+                    <div class="form-group">
+                        <label class="form-label">Target Relocation Date</label>
+                        <input type="date" id="targetDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monthly Income Target</label>
+                        <div class="input-with-currency">
+                            <input type="number" id="incomeTarget" class="form-control" step="100" min="0">
+                            <select id="incomeTargetCurrency" class="form-control currency-select">
+                                <option value="RON">RON</option>
+                                <option value="EUR" selected>EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="VND">VND</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Weekly Python Hours Target</label>
+                        <input type="number" id="pythonTarget" class="form-control" min="1" max="40">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Weekly Vietnamese Hours Target</label>
+                        <input type="number" id="vietnameseTarget" class="form-control" min="1" max="40">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Goals</button>
+                </form>
+            </div>
+
+            <!-- Financial Settings -->
+            <div class="card mb-24">
+                <div class="card-header">
+                    <h2 class="card-title">Financial Settings</h2>
+                </div>
+                <form id="financialForm">
+                    <div class="form-group">
+                        <label class="form-label">Current Savings</label>
+                        <div class="input-with-currency">
+                            <input type="number" id="savings" class="form-control" step="100" min="0">
+                            <select id="savingsCurrency" class="form-control currency-select">
+                                <option value="RON">RON</option>
+                                <option value="EUR" selected>EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="VND">VND</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Monthly Burn Rate</label>
+                        <div class="input-with-currency">
+                            <input type="number" id="monthlyBurn" class="form-control" step="50" min="0">
+                            <select id="burnCurrency" class="form-control currency-select">
+                                <option value="RON">RON</option>
+                                <option value="EUR" selected>EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="VND">VND</option>
+                            </select>
+                        </div>
+                        <p class="form-hint">Your estimated monthly expenses</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Financial Settings</button>
+                </form>
+            </div>
+
+            <!-- Display Settings -->
+            <div class="card mb-24">
+                <div class="card-header">
+                    <h2 class="card-title">Display Settings</h2>
+                </div>
+                <form id="displayForm">
+                    <div class="form-group">
+                        <label class="form-label">Preferred Currency</label>
+                        <select id="preferredCurrency" class="form-control">
+                            <option value="RON">RON - Romanian Leu (lei)</option>
+                            <option value="EUR">EUR - Euro (€)</option>
+                            <option value="USD">USD - US Dollar ($)</option>
+                            <option value="VND">VND - Vietnamese Dong (₫)</option>
+                        </select>
+                        <p class="form-hint">All amounts will be displayed in this currency</p>
+                    </div>
+                    <div id="exchangeRateInfo" class="mb-16" style="display: none;">
+                        <p class="text-secondary text-sm">
+                            Current rate: <strong id="currentRate">--</strong>
+                            <br>
+                            <small>Last updated: <span id="rateDate">--</span></small>
+                        </p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Display Settings</button>
+                </form>
+            </div>
+
+            <!-- Data Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Data Management</h2>
+                </div>
+                <div class="flex gap-12 flex-wrap">
+                    <button class="btn btn-secondary" id="exportBtn">Export Data</button>
+                </div>
+                <p class="form-hint mt-12">Download a backup of all your dashboard data</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="dashboard-footer">
+        <p>Hanoi Relocation Dashboard | </p>
+    </footer>
+
+    <script src="/static/js/nav.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/currency.js"></script>
+    <script>
+        let settings = null;
+
+        (async function init() {
+            await loadSettings();
+            await loadUser();
+            await loadExchangeRates();
+        })();
+
+        async function loadSettings() {
+            try {
+                settings = await API.settings.get();
+                populateForm();
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+
+        async function loadExchangeRates() {
+            try {
+                const data = await API.currency.getRates();
+                if (data.rates) {
+                    Currency.rates = { RON: 1, ...data.rates };
+                    Currency.rateDate = data.date;
+                    updateExchangeRateInfo();
+                }
+            } catch (error) {
+                console.warn('Failed to load exchange rates:', error);
+            }
+        }
+
+        function updateExchangeRateInfo() {
+            const currency = document.getElementById('preferredCurrency').value;
+            const infoDiv = document.getElementById('exchangeRateInfo');
+
+            if (currency === 'RON') {
+                infoDiv.style.display = 'none';
+            } else {
+                infoDiv.style.display = 'block';
+                const rate = Currency.rates[currency];
+                document.getElementById('currentRate').textContent =
+                    `1 ${currency} = ${rate ? rate.toFixed(4) : '--'} RON`;
+                document.getElementById('rateDate').textContent =
+                    Currency.rateDate || 'Not available';
+            }
+        }
+
+        async function loadUser() {
+            try {
+                const user = await Auth.getCurrentUser();
+                if (user) {
+                    document.getElementById('userEmail').textContent = user.email;
+                }
+            } catch (error) {
+                console.error('Failed to load user:', error);
+            }
+        }
+
+        function populateForm() {
+            if (!settings) return;
+            document.getElementById('targetDate').value = settings.target_date || '2026-10-31';
+            document.getElementById('pythonTarget').value = settings.python_weekly_target || 8;
+            document.getElementById('vietnameseTarget').value = settings.vietnamese_weekly_target || 7;
+            document.getElementById('githubUsername').value = settings.github_username || '';
+            document.getElementById('preferredCurrency').value = settings.preferred_currency || 'RON';
+
+            // Financial values are stored in RON, convert to EUR for display by default
+            const displayCurrency = 'EUR';
+            const incomeTargetInRon = settings.income_target || 7500; // ~1500 EUR
+            const savingsInRon = settings.savings || 27500; // ~5500 EUR
+            const burnInRon = settings.monthly_burn || 3000; // ~600 EUR
+
+            // Convert and display
+            document.getElementById('incomeTarget').value = Math.round(Currency.convertFromRon(incomeTargetInRon, displayCurrency));
+            document.getElementById('incomeTargetCurrency').value = displayCurrency;
+
+            document.getElementById('savings').value = Math.round(Currency.convertFromRon(savingsInRon, displayCurrency));
+            document.getElementById('savingsCurrency').value = displayCurrency;
+
+            document.getElementById('monthlyBurn').value = Math.round(Currency.convertFromRon(burnInRon, displayCurrency));
+            document.getElementById('burnCurrency').value = displayCurrency;
+
+            updateExchangeRateInfo();
+        }
+
+        function showAlert(message, type = 'success') {
+            document.getElementById('alertContainer').innerHTML = `
+                <div class="alert alert-${type}">${message}</div>
+            `;
+            setTimeout(() => {
+                document.getElementById('alertContainer').innerHTML = '';
+            }, 3000);
+        }
+
+        document.getElementById('goalsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                // Convert income target to RON for storage
+                const incomeTargetValue = parseFloat(document.getElementById('incomeTarget').value);
+                const incomeTargetCurrency = document.getElementById('incomeTargetCurrency').value;
+                const incomeTargetInRon = Currency.convertToRon(incomeTargetValue, incomeTargetCurrency);
+
+                await API.settings.update({
+                    target_date: document.getElementById('targetDate').value,
+                    income_target: incomeTargetInRon,
+                    python_weekly_target: parseInt(document.getElementById('pythonTarget').value),
+                    vietnamese_weekly_target: parseInt(document.getElementById('vietnameseTarget').value)
+                });
+                showAlert('Goals saved successfully!');
+            } catch (error) {
+                showAlert('Failed to save: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('financialForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                // Convert savings and burn to RON for storage
+                const savingsValue = parseFloat(document.getElementById('savings').value);
+                const savingsCurrency = document.getElementById('savingsCurrency').value;
+                const savingsInRon = Currency.convertToRon(savingsValue, savingsCurrency);
+
+                const burnValue = parseFloat(document.getElementById('monthlyBurn').value);
+                const burnCurrency = document.getElementById('burnCurrency').value;
+                const burnInRon = Currency.convertToRon(burnValue, burnCurrency);
+
+                await API.settings.update({
+                    savings: savingsInRon,
+                    monthly_burn: burnInRon
+                });
+                showAlert('Financial settings saved!');
+            } catch (error) {
+                showAlert('Failed to save: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('portfolioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await API.settings.update({
+                    github_username: document.getElementById('githubUsername').value
+                });
+                showAlert('Portfolio settings saved!');
+            } catch (error) {
+                showAlert('Failed to save: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('displayForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const currency = document.getElementById('preferredCurrency').value;
+                await API.settings.update({
+                    preferred_currency: currency
+                });
+                Currency.displayCurrency = currency;
+                localStorage.setItem('preferred_currency', currency);
+                showAlert('Display settings saved!');
+            } catch (error) {
+                showAlert('Failed to save: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('preferredCurrency').addEventListener('change', updateExchangeRateInfo);
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+
+            if (!current || !newPass) {
+                showAlert('Please fill in both password fields', 'error');
+                return;
+            }
+
+            try {
+                await Auth.changePassword(current, newPass);
+                showAlert('Password changed successfully!');
+                document.getElementById('passwordForm').reset();
+            } catch (error) {
+                showAlert('Failed to change password: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            try {
+                const data = await API.dashboard.getAll();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `hanoi-dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showAlert('Data exported successfully!');
+            } catch (error) {
+                showAlert('Failed to export: ' + error.message, 'error');
+            }
+        });
+
+        // (Login is not required in public dashboard mode)
+    </script>
+</body>
+</html>
