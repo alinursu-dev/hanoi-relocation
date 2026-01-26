@@ -7,6 +7,8 @@ from app import create_app
 
 app = create_app()
 
+
+
 if __name__ == '__main__':
     print("\n Hanoi Relocation Dashboard")
     print("=" * 40)
