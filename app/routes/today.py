@@ -1,16 +1,21 @@
 """
 Today Page - Server-side rendering with Python
 Moves as much logic as possible from JavaScript to Python.
+All data read from SQLite database.
 """
 from flask import Blueprint, render_template
 from datetime import datetime, date, timedelta
 import random
 
-# Import shared data from api module
-from app.routes.api import (
-    DATA, MOTIVATIONS, get_week_dates, get_month_start,
-    calculate_streak, calculate_streak_with_grace, determine_daily_focus
+from app.database import (
+    get_all_settings, get_week_dates, get_month_start,
+    get_python_sessions_by_date, sum_python_hours,
+    get_vietnamese_sessions_by_date, sum_vietnamese_minutes,
+    get_freelance_income_since,
+    get_milestones_upcoming,
+    calculate_streak, calculate_streak_with_grace,
 )
+from app.routes.api import MOTIVATIONS, determine_daily_focus
 
 today_bp = Blueprint('today_page', __name__)
 
@@ -30,7 +35,7 @@ def get_today_date_formatted() -> str:
 
 def calculate_days_remaining() -> int:
     """Calculate days remaining until target date."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     target_date = datetime.strptime(settings['target_date'], '%Y-%m-%d').date()
     return max(0, (target_date - date.today()).days)
 
@@ -44,19 +49,16 @@ def calculate_days_left_in_month() -> int:
 
 def get_python_data() -> dict:
     """Get all Python learning data for today page."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     today_str = date.today().isoformat()
     week_start, week_end = get_week_dates()
 
     # Today's sessions
-    today_sessions = [s for s in DATA['python_sessions'] if s['session_date'] == today_str]
+    today_sessions = get_python_sessions_by_date(today_str)
     today_hours = sum(s['hours'] for s in today_sessions)
 
-    # Week's sessions
-    week_hours = sum(
-        s['hours'] for s in DATA['python_sessions']
-        if week_start.isoformat() <= s['session_date'] <= week_end.isoformat()
-    )
+    # Week's hours
+    week_hours = sum_python_hours(week_start.isoformat(), week_end.isoformat())
 
     # Targets
     weekly_target = settings['python_weekly_target']
@@ -89,21 +91,18 @@ def get_python_data() -> dict:
 
 def get_vietnamese_data() -> dict:
     """Get all Vietnamese learning data for today page."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     today_str = date.today().isoformat()
     week_start, week_end = get_week_dates()
 
     # Today's sessions
-    today_sessions = [s for s in DATA['vietnamese_sessions'] if s['session_date'] == today_str]
+    today_sessions = get_vietnamese_sessions_by_date(today_str)
     today_minutes = sum(s['minutes'] for s in today_sessions)
 
-    # Week's sessions
-    week_minutes = sum(
-        s['minutes'] for s in DATA['vietnamese_sessions']
-        if week_start.isoformat() <= s['session_date'] <= week_end.isoformat()
-    )
+    # Week's minutes
+    week_minutes = sum_vietnamese_minutes(week_start.isoformat(), week_end.isoformat())
 
-    # Targets (weekly target is in hours, convert to minutes for daily)
+    # Targets
     weekly_target_hours = settings['vietnamese_weekly_target']
     weekly_target_minutes = weekly_target_hours * 60
     daily_target = int(weekly_target_minutes / 7)
@@ -140,20 +139,14 @@ def get_vietnamese_data() -> dict:
 
 def get_income_data() -> dict:
     """Get income/freelance data for today page."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     month_start = get_month_start()
 
-    # This month's income
-    income_this_month = sum(
-        p['amount'] for p in DATA['freelance_projects']
-        if p['project_date'] >= month_start.isoformat()
-    )
-
+    income_this_month = get_freelance_income_since(month_start.isoformat())
     income_target = settings['income_target']
     income_gap = max(0, income_target - income_this_month)
     income_progress = min(100, int((income_this_month / income_target) * 100)) if income_target > 0 else 0
 
-    # Ring SVG calculation (circumference = 2 * pi * r = 2 * 3.14159 * 54 = 339.292)
     circumference = 339.292
     ring_offset = circumference - (income_progress / 100) * circumference
 
@@ -169,19 +162,12 @@ def get_income_data() -> dict:
 
 def get_smart_focus() -> dict:
     """Get smart focus recommendation."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     week_start, week_end = get_week_dates()
     month_start = get_month_start()
 
-    # Calculate weekly progress
-    py_week = sum(
-        s['hours'] for s in DATA['python_sessions']
-        if week_start.isoformat() <= s['session_date'] <= week_end.isoformat()
-    )
-    vn_week_mins = sum(
-        s['minutes'] for s in DATA['vietnamese_sessions']
-        if week_start.isoformat() <= s['session_date'] <= week_end.isoformat()
-    )
+    py_week = sum_python_hours(week_start.isoformat(), week_end.isoformat())
+    vn_week_mins = sum_vietnamese_minutes(week_start.isoformat(), week_end.isoformat())
     vn_week = vn_week_mins / 60
 
     py_target = settings['python_weekly_target']
@@ -190,33 +176,19 @@ def get_smart_focus() -> dict:
     py_percent = min(100, int((py_week / py_target) * 100)) if py_target > 0 else 100
     vn_percent = min(100, int((vn_week / vn_target) * 100)) if vn_target > 0 else 100
 
-    # Income progress
-    income_month = sum(
-        p['amount'] for p in DATA['freelance_projects']
-        if p['project_date'] >= month_start.isoformat()
-    )
+    income_month = get_freelance_income_since(month_start.isoformat())
     income_target = settings['income_target']
     income_percent = min(100, int((income_month / income_target) * 100)) if income_target > 0 else 100
 
-    # Streak info
     streak_info = calculate_streak_with_grace()
-
-    # Get focus recommendation
-    focus = determine_daily_focus(py_percent, vn_percent, income_percent, streak_info)
-
-    return focus
+    return determine_daily_focus(py_percent, vn_percent, income_percent, streak_info)
 
 
 def get_upcoming_milestones() -> list:
     """Get milestones coming up this week."""
-    week_start, week_end = get_week_dates()
+    _, week_end = get_week_dates()
+    upcoming = get_milestones_upcoming(week_end.isoformat())
 
-    upcoming = [
-        m for m in DATA['milestones']
-        if not m['completed'] and m['target_date'] <= week_end.isoformat()
-    ]
-
-    # Parse dates for template rendering
     for m in upcoming:
         dt = datetime.strptime(m['target_date'], '%Y-%m-%d')
         m['day'] = dt.day
@@ -230,22 +202,9 @@ def should_show_evening_reflection() -> bool:
     return datetime.now().hour >= 18
 
 
-def get_currency_settings() -> dict:
-    """Get currency settings for the page."""
-    settings = DATA['settings']
-    return {
-        'preferred': settings.get('preferred_currency', 'EUR'),
-        'rates': settings.get('exchange_rates', {
-            'EUR': 4.97,
-            'USD': 4.55,
-            'VND': 0.00018
-        })
-    }
-
-
 def format_currency(amount_ron: float, currency_code: str = None) -> str:
     """Format amount from RON to preferred currency."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     currency_code = currency_code or settings.get('preferred_currency', 'EUR')
     rates = settings.get('exchange_rates', {'EUR': 4.97, 'USD': 4.55, 'VND': 0.00018})
 
@@ -266,34 +225,16 @@ def format_currency(amount_ron: float, currency_code: str = None) -> str:
 @today_bp.route('/today')
 def today_page():
     """Render the today page with all data calculated server-side."""
-
-    # Gather all data using Python
     context = {
-        # Date and countdown
         'today_date': get_today_date_formatted(),
         'days_remaining': calculate_days_remaining(),
         'motivation': random.choice(MOTIVATIONS),
-
-        # Learning data
         'python': get_python_data(),
         'vietnamese': get_vietnamese_data(),
-
-        # Income data
         'income': get_income_data(),
-
-        # Smart focus
         'focus': get_smart_focus(),
-
-        # Milestones
         'milestones': get_upcoming_milestones(),
-
-        # UI state
         'show_reflection': should_show_evening_reflection(),
-
-        # Currency
-        'currency': get_currency_settings(),
-
-        # Helper for formatting currency in template
         'format_currency': format_currency,
     }
 

@@ -10,6 +10,10 @@ def create_app():
     app.config['SECRET_KEY'] = 'dev-secret-key'
     CORS(app, supports_credentials=True)
 
+    # Initialize SQLite database
+    from app.database import init_db
+    init_db()
+
     # Register blueprints
     from app.routes.main import main_bp
     from app.routes.api import api_bp

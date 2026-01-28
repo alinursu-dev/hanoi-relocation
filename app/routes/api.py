@@ -1,81 +1,31 @@
 """
-API Routes - In-memory data storage for prototype
-All data is stored in memory and resets when the server restarts.
+API Routes - SQLite persistent storage
+All data is stored in hanoi.db and persists across server restarts.
 """
 from flask import Blueprint, request, jsonify
 from datetime import datetime, date, timedelta
 import random
 
+from app.database import (
+    get_all_settings, update_settings as db_update_settings,
+    get_vietnamese_sessions, get_vietnamese_sessions_by_date,
+    get_vietnamese_sessions_between, sum_vietnamese_minutes,
+    create_vietnamese_session, delete_vietnamese_session,
+    get_python_sessions, get_python_sessions_by_date,
+    get_python_sessions_between, sum_python_hours,
+    create_python_session, delete_python_session,
+    get_freelance_projects, get_freelance_income_since, get_freelance_stats,
+    create_freelance_project, delete_freelance_project,
+    get_milestones, get_milestones_upcoming,
+    create_milestone, update_milestone, delete_milestone,
+    get_notes, create_note, update_note, delete_note,
+    get_learning_path, update_learning_skill,
+    calculate_streak, calculate_streak_with_grace,
+    get_week_dates, get_month_start,
+    get_vietnamese_session_dates,
+)
+
 api_bp = Blueprint('api', __name__)
-
-# ============ IN-MEMORY DATA STORE ============
-
-# Default settings
-DATA = {
-    'settings': {
-        'target_date': '2026-10-31',
-        'income_target': 7500,  # RON
-        'python_weekly_target': 8,
-        'vietnamese_weekly_target': 7,
-        'savings': 27500,  # RON
-        'monthly_burn': 3000,  # RON
-        'preferred_currency': 'EUR',
-        'github_username': '',
-        # Custom exchange rates (1 unit = X RON)
-        'exchange_rates': {
-            'EUR': 4.97,
-            'USD': 4.55,
-            'VND': 0.00018
-        }
-    },
-    'vietnamese_sessions': [
-        {'id': 1, 'session_date': (date.today() - timedelta(days=1)).isoformat(), 'minutes': 45, 'session_type': 'duolingo', 'focus_area': 'Basic phrases'},
-        {'id': 2, 'session_date': (date.today() - timedelta(days=2)).isoformat(), 'minutes': 30, 'session_type': 'podcast', 'focus_area': 'Listening'},
-        {'id': 3, 'session_date': (date.today() - timedelta(days=3)).isoformat(), 'minutes': 60, 'session_type': 'tutoring', 'focus_area': 'Conversation'},
-    ],
-    'python_sessions': [
-        {'id': 1, 'session_date': (date.today() - timedelta(days=1)).isoformat(), 'hours': 2, 'topic': 'Pandas DataFrames', 'notes': 'Learned about filtering and groupby'},
-        {'id': 2, 'session_date': (date.today() - timedelta(days=3)).isoformat(), 'hours': 1.5, 'topic': 'Flask basics', 'notes': 'Created first routes'},
-    ],
-    'freelance_projects': [
-        {'id': 1, 'title': 'Data Analysis Report', 'project_date': (date.today() - timedelta(days=5)).isoformat(), 'amount': 1500, 'hours': 8, 'platform': 'upwork'},
-        {'id': 2, 'title': 'Web Scraping Script', 'project_date': (date.today() - timedelta(days=15)).isoformat(), 'amount': 800, 'hours': 4, 'platform': 'fiverr'},
-    ],
-    'milestones': [
-        {'id': 1, 'title': 'Complete Python Basics', 'target_date': '2025-02-28', 'category': 'python', 'notes': 'Finish all beginner modules', 'completed': True},
-        {'id': 2, 'title': 'First Freelance Client', 'target_date': '2025-03-15', 'category': 'freelance', 'notes': '', 'completed': True},
-        {'id': 3, 'title': 'Vietnamese A1 Level', 'target_date': '2025-06-01', 'category': 'vietnamese', 'notes': 'Basic conversation ability', 'completed': False},
-        {'id': 4, 'title': 'Save €5,000', 'target_date': '2025-08-01', 'category': 'financial', 'notes': '', 'completed': False},
-    ],
-    'notes': [
-        {'id': 1, 'title': 'Hanoi Districts Research', 'category': 'relocation', 'content': 'Tay Ho - expat area, expensive. Ba Dinh - central, good cafes. Hoan Kiem - tourist area.', 'created_at': datetime.now().isoformat()},
-        {'id': 2, 'title': 'Vietnamese Learning Resources', 'category': 'learning', 'content': 'Duolingo, VietnamesePod101, italki tutors', 'created_at': datetime.now().isoformat()},
-    ],
-    'learning_path': [
-        {'skill_id': 'python_basics', 'skill_name': 'Python Basics & Syntax', 'phase': 1, 'completed': True, 'project_url': None},
-        {'skill_id': 'data_structures', 'skill_name': 'Data Structures (Lists, Dicts, Sets)', 'phase': 1, 'completed': True, 'project_url': None},
-        {'skill_id': 'functions_oop', 'skill_name': 'Functions & OOP', 'phase': 1, 'completed': True, 'project_url': None},
-        {'skill_id': 'file_io', 'skill_name': 'File I/O & CSV Processing', 'phase': 1, 'completed': False, 'project_url': None},
-        {'skill_id': 'error_handling', 'skill_name': 'Error Handling & Debugging', 'phase': 1, 'completed': False, 'project_url': None},
-        {'skill_id': 'pandas_basics', 'skill_name': 'Pandas Basics', 'phase': 2, 'completed': False, 'project_url': None},
-        {'skill_id': 'data_visualization', 'skill_name': 'Data Visualization (Matplotlib/Plotly)', 'phase': 2, 'completed': False, 'project_url': None},
-        {'skill_id': 'web_scraping', 'skill_name': 'Web Scraping (BeautifulSoup/Selenium)', 'phase': 2, 'completed': False, 'project_url': None},
-        {'skill_id': 'apis_json', 'skill_name': 'APIs & JSON', 'phase': 2, 'completed': False, 'project_url': None},
-        {'skill_id': 'excel_automation', 'skill_name': 'Excel Automation (openpyxl)', 'phase': 3, 'completed': False, 'project_url': None},
-        {'skill_id': 'pdf_generation', 'skill_name': 'PDF Generation', 'phase': 3, 'completed': False, 'project_url': None},
-        {'skill_id': 'database_basics', 'skill_name': 'Database Basics (SQLite/PostgreSQL)', 'phase': 3, 'completed': False, 'project_url': None},
-        {'skill_id': 'flask_basics', 'skill_name': 'Flask Web Apps', 'phase': 3, 'completed': False, 'project_url': None},
-    ]
-}
-
-# ID counters
-COUNTERS = {
-    'vietnamese': 4,
-    'python': 3,
-    'freelance': 3,
-    'milestones': 5,
-    'notes': 3
-}
 
 MOTIVATIONS = [
     "Every day is a step closer to Hanoi. Keep pushing!",
@@ -93,94 +43,114 @@ MOTIVATIONS = [
 
 # ============ HELPER FUNCTIONS ============
 
-def get_week_dates():
-    """Get current week start and end dates."""
-    today = date.today()
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
-    return week_start, week_end
+def determine_daily_focus(py_percent, vn_percent, income_percent, streak_info):
+    """Determine what the user should focus on today."""
+    suggestions = {
+        'python': [
+            "Work through a Python tutorial or course module",
+            "Practice coding challenges on LeetCode or HackerRank",
+            "Build a small project to apply what you've learned"
+        ],
+        'vietnamese': [
+            "Complete a Duolingo lesson",
+            "Listen to a VietnamesePod101 episode",
+            "Practice speaking with a tutor on italki"
+        ],
+        'freelance': [
+            "Browse Upwork for new opportunities",
+            "Update your portfolio or profile",
+            "Reach out to past clients for referrals"
+        ],
+        'balanced': [
+            "Great job staying on track!",
+            "Consider working on your portfolio",
+            "Take time to review and consolidate learning"
+        ]
+    }
 
+    # Priority 1: Protect the streak
+    if streak_info['at_risk'] and not streak_info['practiced_today']:
+        today_str = date.today().isoformat()
+        mins_today = sum_vietnamese_minutes(today_str, today_str)
+        needed = max(15, 60 - mins_today)
+        return {
+            'area': 'vietnamese',
+            'priority': 'urgent',
+            'reason': f"Your {streak_info['streak']}-day streak is at risk!",
+            'suggestion': f"Just {needed} more minutes to keep it alive",
+            'icon': '🔥'
+        }
 
-def get_month_start():
-    """Get first day of current month."""
-    return date.today().replace(day=1)
+    # Priority 2: Catch up on the most behind area
+    if vn_percent < py_percent and vn_percent < 70:
+        return {
+            'area': 'vietnamese',
+            'priority': 'high',
+            'reason': f"You're at {vn_percent}% of your Vietnamese target (vs {py_percent}% Python)",
+            'suggestion': random.choice(suggestions['vietnamese']),
+            'icon': '🇻🇳'
+        }
 
+    if py_percent < vn_percent and py_percent < 70:
+        return {
+            'area': 'python',
+            'priority': 'high',
+            'reason': f"You're at {py_percent}% of your Python target (vs {vn_percent}% Vietnamese)",
+            'suggestion': random.choice(suggestions['python']),
+            'icon': '🐍'
+        }
 
-def calculate_streak():
-    """Calculate Vietnamese practice streak."""
-    sessions = DATA['vietnamese_sessions']
-    if not sessions:
-        return 0
+    # Priority 3: Both learning areas good, focus on income
+    if py_percent >= 70 and vn_percent >= 70 and income_percent < 50:
+        return {
+            'area': 'freelance',
+            'priority': 'medium',
+            'reason': f"Learning is on track! Income is at {income_percent}% of target",
+            'suggestion': random.choice(suggestions['freelance']),
+            'icon': '💼'
+        }
 
-    session_dates = set(s['session_date'] for s in sessions)
-    today = date.today()
-    streak = 0
-    current_date = today
+    # Priority 4: Everything on track
+    if py_percent >= 80 and vn_percent >= 80:
+        return {
+            'area': 'balanced',
+            'priority': 'low',
+            'reason': "You're crushing it this week!",
+            'suggestion': random.choice(suggestions['balanced']),
+            'icon': '🎯'
+        }
 
-    # Check if practiced today or yesterday
-    if today.isoformat() not in session_dates:
-        current_date = today - timedelta(days=1)
-        if current_date.isoformat() not in session_dates:
-            return 0
-
-    while current_date.isoformat() in session_dates:
-        streak += 1
-        current_date -= timedelta(days=1)
-
-    return streak
-
-
-def calculate_streak_with_grace():
-    """Calculate streak with 1-day grace period."""
-    sessions = DATA['vietnamese_sessions']
-    if not sessions:
-        return {'streak': 0, 'at_risk': False, 'grace_active': False, 'practiced_today': False}
-
-    session_dates = set(s['session_date'] for s in sessions)
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    day_before = today - timedelta(days=2)
-
-    practiced_today = today.isoformat() in session_dates
-    practiced_yesterday = yesterday.isoformat() in session_dates
-    practiced_day_before = day_before.isoformat() in session_dates
-
-    # Calculate base streak
-    streak = 0
-    if practiced_today:
-        current_date = today
-        while current_date.isoformat() in session_dates:
-            streak += 1
-            current_date -= timedelta(days=1)
-        return {'streak': streak, 'at_risk': False, 'grace_active': False, 'practiced_today': True}
-
-    # Grace period: didn't practice today but did yesterday
-    if practiced_yesterday:
-        current_date = yesterday
-        while current_date.isoformat() in session_dates:
-            streak += 1
-            current_date -= timedelta(days=1)
-        return {'streak': streak, 'at_risk': True, 'grace_active': True, 'practiced_today': False}
-
-    # Streak broken (missed 2+ days)
-    return {'streak': 0, 'at_risk': False, 'grace_active': False, 'practiced_today': False}
+    # Default: work on the lower one
+    if py_percent <= vn_percent:
+        return {
+            'area': 'python',
+            'priority': 'medium',
+            'reason': f"Python is at {py_percent}% - room for improvement",
+            'suggestion': random.choice(suggestions['python']),
+            'icon': '🐍'
+        }
+    else:
+        return {
+            'area': 'vietnamese',
+            'priority': 'medium',
+            'reason': f"Vietnamese is at {vn_percent}% - room for improvement",
+            'suggestion': random.choice(suggestions['vietnamese']),
+            'icon': '🇻🇳'
+        }
 
 
 def get_recommendations():
     """Get smart recommendations based on current progress."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     today = date.today()
-    today_str = today.isoformat()
     target_date = datetime.strptime(settings['target_date'], '%Y-%m-%d').date()
     week_start, week_end = get_week_dates()
     month_start = get_month_start()
 
     # Calculate weekly progress
-    py_week = sum(s['hours'] for s in DATA['python_sessions']
-                  if week_start.isoformat() <= s['session_date'] <= week_end.isoformat())
-    vn_week_mins = sum(s['minutes'] for s in DATA['vietnamese_sessions']
-                       if week_start.isoformat() <= s['session_date'] <= week_end.isoformat())
-    vn_week = vn_week_mins / 60  # Convert to hours
+    py_week = sum_python_hours(week_start.isoformat(), week_end.isoformat())
+    vn_week_mins = sum_vietnamese_minutes(week_start.isoformat(), week_end.isoformat())
+    vn_week = vn_week_mins / 60
 
     py_target = settings['python_weekly_target']
     vn_target = settings['vietnamese_weekly_target']
@@ -189,8 +159,7 @@ def get_recommendations():
     vn_percent = min(100, int((vn_week / vn_target) * 100)) if vn_target > 0 else 100
 
     # Income progress
-    income_month = sum(p['amount'] for p in DATA['freelance_projects']
-                       if p['project_date'] >= month_start.isoformat())
+    income_month = get_freelance_income_since(month_start.isoformat())
     income_target = settings['income_target']
     income_percent = min(100, int((income_month / income_target) * 100)) if income_target > 0 else 100
 
@@ -198,7 +167,7 @@ def get_recommendations():
     streak_info = calculate_streak_with_grace()
 
     # Calculate pace for Vietnamese (600 hours to B1)
-    vn_total_hours = sum(s['minutes'] for s in DATA['vietnamese_sessions']) / 60
+    vn_total_hours = sum_vietnamese_minutes() / 60
     hours_remaining = max(0, 600 - vn_total_hours)
     weeks_remaining = max(1, (target_date - today).days / 7)
     required_weekly = round(hours_remaining / weeks_remaining, 1)
@@ -261,104 +230,6 @@ def get_recommendations():
     })
 
 
-def determine_daily_focus(py_percent, vn_percent, income_percent, streak_info):
-    """Determine what the user should focus on today."""
-    suggestions = {
-        'python': [
-            "Work through a Python tutorial or course module",
-            "Practice coding challenges on LeetCode or HackerRank",
-            "Build a small project to apply what you've learned"
-        ],
-        'vietnamese': [
-            "Complete a Duolingo lesson",
-            "Listen to a VietnamesePod101 episode",
-            "Practice speaking with a tutor on italki"
-        ],
-        'freelance': [
-            "Browse Upwork for new opportunities",
-            "Update your portfolio or profile",
-            "Reach out to past clients for referrals"
-        ],
-        'balanced': [
-            "Great job staying on track!",
-            "Consider working on your portfolio",
-            "Take time to review and consolidate learning"
-        ]
-    }
-
-    # Priority 1: Protect the streak
-    if streak_info['at_risk'] and not streak_info['practiced_today']:
-        mins_today = sum(s['minutes'] for s in DATA['vietnamese_sessions']
-                         if s['session_date'] == date.today().isoformat())
-        needed = max(15, 60 - mins_today)
-        return {
-            'area': 'vietnamese',
-            'priority': 'urgent',
-            'reason': f"Your {streak_info['streak']}-day streak is at risk!",
-            'suggestion': f"Just {needed} more minutes to keep it alive",
-            'icon': '🔥'
-        }
-
-    # Priority 2: Catch up on the most behind area
-    if vn_percent < py_percent and vn_percent < 70:
-        gap = 100 - vn_percent
-        return {
-            'area': 'vietnamese',
-            'priority': 'high',
-            'reason': f"You're at {vn_percent}% of your Vietnamese target (vs {py_percent}% Python)",
-            'suggestion': random.choice(suggestions['vietnamese']),
-            'icon': '🇻🇳'
-        }
-
-    if py_percent < vn_percent and py_percent < 70:
-        gap = 100 - py_percent
-        return {
-            'area': 'python',
-            'priority': 'high',
-            'reason': f"You're at {py_percent}% of your Python target (vs {vn_percent}% Vietnamese)",
-            'suggestion': random.choice(suggestions['python']),
-            'icon': '🐍'
-        }
-
-    # Priority 3: Both learning areas good, focus on income
-    if py_percent >= 70 and vn_percent >= 70 and income_percent < 50:
-        return {
-            'area': 'freelance',
-            'priority': 'medium',
-            'reason': f"Learning is on track! Income is at {income_percent}% of target",
-            'suggestion': random.choice(suggestions['freelance']),
-            'icon': '💼'
-        }
-
-    # Priority 4: Everything on track
-    if py_percent >= 80 and vn_percent >= 80:
-        return {
-            'area': 'balanced',
-            'priority': 'low',
-            'reason': "You're crushing it this week!",
-            'suggestion': random.choice(suggestions['balanced']),
-            'icon': '🎯'
-        }
-
-    # Default: work on the lower one
-    if py_percent <= vn_percent:
-        return {
-            'area': 'python',
-            'priority': 'medium',
-            'reason': f"Python is at {py_percent}% - room for improvement",
-            'suggestion': random.choice(suggestions['python']),
-            'icon': '🐍'
-        }
-    else:
-        return {
-            'area': 'vietnamese',
-            'priority': 'medium',
-            'reason': f"Vietnamese is at {vn_percent}% - room for improvement",
-            'suggestion': random.choice(suggestions['vietnamese']),
-            'icon': '🇻🇳'
-        }
-
-
 # ============ AUTH ENDPOINTS ============
 
 @api_bp.route('/auth.php', methods=['GET', 'POST'])
@@ -402,8 +273,8 @@ def dashboard():
         return get_today()
     elif action == 'settings':
         if request.method == 'PUT':
-            return update_settings()
-        return get_settings()
+            return handle_update_settings()
+        return handle_get_settings()
     elif action == 'milestones':
         return handle_milestones()
     elif action == 'python':
@@ -425,42 +296,39 @@ def dashboard():
 def get_all():
     """Get all dashboard data."""
     return jsonify({
-        'vietnameseSessions': DATA['vietnamese_sessions'],
-        'pythonSessions': DATA['python_sessions'],
-        'freelanceProjects': DATA['freelance_projects'],
-        'milestones': DATA['milestones'],
-        'notes': DATA['notes']
+        'vietnameseSessions': get_vietnamese_sessions(),
+        'pythonSessions': get_python_sessions(),
+        'freelanceProjects': get_freelance_projects(),
+        'milestones': get_milestones(),
+        'notes': get_notes()
     })
 
 
 def get_stats():
     """Get dashboard statistics."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     today = date.today()
     target_date = datetime.strptime(settings['target_date'], '%Y-%m-%d').date()
     week_start, week_end = get_week_dates()
     month_start = get_month_start()
 
     # Vietnamese stats
-    vn_total = sum(s['minutes'] for s in DATA['vietnamese_sessions'])
-    vn_week = sum(s['minutes'] for s in DATA['vietnamese_sessions']
-                  if week_start.isoformat() <= s['session_date'] <= week_end.isoformat())
+    vn_total = sum_vietnamese_minutes()
+    vn_week = sum_vietnamese_minutes(week_start.isoformat(), week_end.isoformat())
 
     # Python stats
-    py_total = sum(s['hours'] for s in DATA['python_sessions'])
-    py_week = sum(s['hours'] for s in DATA['python_sessions']
-                  if week_start.isoformat() <= s['session_date'] <= week_end.isoformat())
+    py_total = sum_python_hours()
+    py_week = sum_python_hours(week_start.isoformat(), week_end.isoformat())
 
     # Freelance stats
-    fl_total = sum(p['amount'] for p in DATA['freelance_projects'])
-    fl_month = sum(p['amount'] for p in DATA['freelance_projects']
-                   if p['project_date'] >= month_start.isoformat())
-    fl_hours = sum(p['hours'] or 0 for p in DATA['freelance_projects'])
-    avg_rate = fl_total / fl_hours if fl_hours > 0 else 0
+    fl_stats = get_freelance_stats()
+    fl_month = get_freelance_income_since(month_start.isoformat())
+    avg_rate = fl_stats['total_income'] / fl_stats['total_hours'] if fl_stats['total_hours'] > 0 else 0
 
     # Learning path
-    completed_skills = sum(1 for s in DATA['learning_path'] if s['completed'])
-    total_skills = len(DATA['learning_path'])
+    lp = get_learning_path()
+    completed_skills = sum(1 for s in lp if s['completed'])
+    total_skills = len(lp)
     lp_percentage = int((completed_skills / total_skills) * 100) if total_skills > 0 else 0
 
     # Financial
@@ -484,10 +352,10 @@ def get_stats():
             'weeklyTarget': settings['python_weekly_target']
         },
         'freelance': {
-            'incomeTotal': fl_total,
+            'incomeTotal': fl_stats['total_income'],
             'incomeThisMonth': fl_month,
             'incomeTarget': settings['income_target'],
-            'totalProjects': len(DATA['freelance_projects']),
+            'totalProjects': fl_stats['total_projects'],
             'avgHourlyRate': round(avg_rate, 2)
         },
         'financial': {
@@ -505,7 +373,7 @@ def get_stats():
 
 def get_today():
     """Get today's focused data."""
-    settings = DATA['settings']
+    settings = get_all_settings()
     today = date.today()
     today_str = today.isoformat()
     target_date = datetime.strptime(settings['target_date'], '%Y-%m-%d').date()
@@ -513,26 +381,22 @@ def get_today():
     month_start = get_month_start()
 
     # Python today/week
-    py_today = [s for s in DATA['python_sessions'] if s['session_date'] == today_str]
+    py_today = get_python_sessions_by_date(today_str)
     py_today_hours = sum(s['hours'] for s in py_today)
-    py_week = sum(s['hours'] for s in DATA['python_sessions']
-                  if week_start.isoformat() <= s['session_date'] <= week_end.isoformat())
+    py_week = sum_python_hours(week_start.isoformat(), week_end.isoformat())
 
     # Vietnamese today/week
-    vn_today = [s for s in DATA['vietnamese_sessions'] if s['session_date'] == today_str]
+    vn_today = get_vietnamese_sessions_by_date(today_str)
     vn_today_mins = sum(s['minutes'] for s in vn_today)
-    vn_week = sum(s['minutes'] for s in DATA['vietnamese_sessions']
-                  if week_start.isoformat() <= s['session_date'] <= week_end.isoformat())
+    vn_week = sum_vietnamese_minutes(week_start.isoformat(), week_end.isoformat())
 
     # Income
-    income_month = sum(p['amount'] for p in DATA['freelance_projects']
-                       if p['project_date'] >= month_start.isoformat())
+    income_month = get_freelance_income_since(month_start.isoformat())
     income_gap = max(0, settings['income_target'] - income_month)
     income_progress = min(100, int((income_month / settings['income_target']) * 100)) if settings['income_target'] > 0 else 0
 
     # Upcoming milestones
-    upcoming = [m for m in DATA['milestones']
-                if not m['completed'] and m['target_date'] <= week_end.isoformat()]
+    upcoming = get_milestones_upcoming(week_end.isoformat())
 
     # Daily targets
     py_daily = round(settings['python_weekly_target'] / 7, 1)
@@ -568,17 +432,15 @@ def get_today():
     })
 
 
-def get_settings():
+def handle_get_settings():
     """Get settings."""
-    return jsonify(DATA['settings'])
+    return jsonify(get_all_settings())
 
 
-def update_settings():
+def handle_update_settings():
     """Update settings."""
     data = request.get_json()
-    for key, value in data.items():
-        if key in DATA['settings']:
-            DATA['settings'][key] = value
+    db_update_settings(data)
     return jsonify({'success': True})
 
 
@@ -586,152 +448,127 @@ def handle_milestones():
     """Handle milestone CRUD."""
     if request.method == 'POST':
         data = request.get_json()
-        milestone = {
-            'id': COUNTERS['milestones'],
-            'title': data['title'],
-            'target_date': data['target_date'],
-            'category': data.get('category'),
-            'notes': data.get('notes', ''),
-            'completed': False
-        }
-        COUNTERS['milestones'] += 1
-        DATA['milestones'].append(milestone)
-        return jsonify({'success': True, 'id': milestone['id']})
+        new_id = create_milestone(
+            title=data['title'],
+            target_date=data['target_date'],
+            category=data.get('category', ''),
+            notes=data.get('notes', '')
+        )
+        return jsonify({'success': True, 'id': new_id})
 
     elif request.method == 'PUT':
         milestone_id = int(request.args.get('id'))
         data = request.get_json()
-        for m in DATA['milestones']:
-            if m['id'] == milestone_id:
-                m.update({k: v for k, v in data.items() if k != 'id'})
-                break
+        update_milestone(milestone_id, data)
         return jsonify({'success': True})
 
     elif request.method == 'DELETE':
         milestone_id = int(request.args.get('id'))
-        DATA['milestones'] = [m for m in DATA['milestones'] if m['id'] != milestone_id]
+        delete_milestone(milestone_id)
         return jsonify({'success': True})
 
-    return jsonify(DATA['milestones'])
+    return jsonify(get_milestones())
 
 
 def handle_python():
     """Handle Python session CRUD."""
     if request.method == 'POST':
         data = request.get_json()
-        session = {
-            'id': COUNTERS['python'],
-            'session_date': data['session_date'],
-            'hours': data['hours'],
-            'topic': data.get('topic', ''),
-            'notes': data.get('notes', '')
-        }
-        COUNTERS['python'] += 1
-        DATA['python_sessions'].insert(0, session)
-        return jsonify({'success': True, 'id': session['id']})
+        new_id = create_python_session(
+            session_date=data['session_date'],
+            hours=data['hours'],
+            topic=data.get('topic', ''),
+            notes=data.get('notes', '')
+        )
+        return jsonify({'success': True, 'id': new_id})
 
     elif request.method == 'DELETE':
         session_id = int(request.args.get('id'))
-        DATA['python_sessions'] = [s for s in DATA['python_sessions'] if s['id'] != session_id]
+        delete_python_session(session_id)
         return jsonify({'success': True})
 
-    return jsonify(DATA['python_sessions'])
+    return jsonify(get_python_sessions())
 
 
 def handle_vietnamese():
     """Handle Vietnamese session CRUD."""
     if request.method == 'POST':
         data = request.get_json()
-        session = {
-            'id': COUNTERS['vietnamese'],
-            'session_date': data['session_date'],
-            'minutes': data['minutes'],
-            'session_type': data.get('session_type', ''),
-            'focus_area': data.get('focus_area', '')
-        }
-        COUNTERS['vietnamese'] += 1
-        DATA['vietnamese_sessions'].insert(0, session)
-        return jsonify({'success': True, 'id': session['id']})
+        new_id = create_vietnamese_session(
+            session_date=data['session_date'],
+            minutes=data['minutes'],
+            session_type=data.get('session_type', ''),
+            focus_area=data.get('focus_area', '')
+        )
+        return jsonify({'success': True, 'id': new_id})
 
     elif request.method == 'DELETE':
         session_id = int(request.args.get('id'))
-        DATA['vietnamese_sessions'] = [s for s in DATA['vietnamese_sessions'] if s['id'] != session_id]
+        delete_vietnamese_session(session_id)
         return jsonify({'success': True})
 
-    return jsonify(DATA['vietnamese_sessions'])
+    return jsonify(get_vietnamese_sessions())
 
 
 def handle_freelance():
     """Handle freelance project CRUD."""
     if request.method == 'POST':
         data = request.get_json()
-        project = {
-            'id': COUNTERS['freelance'],
-            'title': data['title'],
-            'project_date': data['project_date'],
-            'amount': data['amount'],
-            'hours': data.get('hours'),
-            'platform': data.get('platform', ''),
-            'description': data.get('description', '')
-        }
-        COUNTERS['freelance'] += 1
-        DATA['freelance_projects'].insert(0, project)
-        return jsonify({'success': True, 'id': project['id']})
+        new_id = create_freelance_project(
+            title=data['title'],
+            project_date=data['project_date'],
+            amount=data['amount'],
+            hours=data.get('hours', 0),
+            platform=data.get('platform', ''),
+            description=data.get('description', '')
+        )
+        return jsonify({'success': True, 'id': new_id})
 
     elif request.method == 'DELETE':
         project_id = int(request.args.get('id'))
-        DATA['freelance_projects'] = [p for p in DATA['freelance_projects'] if p['id'] != project_id]
+        delete_freelance_project(project_id)
         return jsonify({'success': True})
 
-    return jsonify(DATA['freelance_projects'])
+    return jsonify(get_freelance_projects())
 
 
 def handle_notes():
     """Handle notes CRUD."""
     if request.method == 'POST':
         data = request.get_json()
-        note = {
-            'id': COUNTERS['notes'],
-            'title': data['title'],
-            'category': data.get('category', ''),
-            'content': data.get('content', ''),
-            'created_at': datetime.now().isoformat()
-        }
-        COUNTERS['notes'] += 1
-        DATA['notes'].insert(0, note)
-        return jsonify({'success': True, 'id': note['id']})
+        new_id = create_note(
+            title=data['title'],
+            category=data.get('category', ''),
+            content=data.get('content', '')
+        )
+        return jsonify({'success': True, 'id': new_id})
 
     elif request.method == 'PUT':
         note_id = int(request.args.get('id'))
         data = request.get_json()
-        for n in DATA['notes']:
-            if n['id'] == note_id:
-                n.update({k: v for k, v in data.items() if k != 'id'})
-                break
+        update_note(note_id, data)
         return jsonify({'success': True})
 
     elif request.method == 'DELETE':
         note_id = int(request.args.get('id'))
-        DATA['notes'] = [n for n in DATA['notes'] if n['id'] != note_id]
+        delete_note(note_id)
         return jsonify({'success': True})
 
-    return jsonify(DATA['notes'])
+    return jsonify(get_notes())
 
 
 def handle_learning_path():
     """Handle learning path."""
     if request.method == 'PUT':
         data = request.get_json()
-        skill_id = data.get('skill_id')
-        for skill in DATA['learning_path']:
-            if skill['skill_id'] == skill_id:
-                skill['completed'] = data.get('completed', False)
-                if data.get('project_url'):
-                    skill['project_url'] = data['project_url']
-                break
+        update_learning_skill(
+            skill_id=data.get('skill_id'),
+            completed=data.get('completed'),
+            project_url=data.get('project_url')
+        )
         return jsonify({'success': True})
 
-    return jsonify(DATA['learning_path'])
+    return jsonify(get_learning_path())
 
 
 # ============ CURRENCY ENDPOINT ============
@@ -740,9 +577,8 @@ def handle_learning_path():
 def currency():
     """Currency API endpoint."""
     action = request.args.get('action')
-
-    # Get exchange rates from settings (user-configurable)
-    rates = DATA['settings'].get('exchange_rates', {
+    settings = get_all_settings()
+    rates = settings.get('exchange_rates', {
         'EUR': 4.97,
         'USD': 4.55,
         'VND': 0.00018
@@ -750,15 +586,17 @@ def currency():
 
     if action == 'rates':
         if request.method == 'PUT':
-            # Update exchange rates
             data = request.get_json()
             if data and 'rates' in data:
+                new_rates = {}
                 for currency_code, rate in data['rates'].items():
                     if currency_code in ['EUR', 'USD', 'VND']:
-                        DATA['settings']['exchange_rates'][currency_code] = float(rate)
+                        new_rates[currency_code] = float(rate)
+                db_update_settings({'exchange_rates': new_rates})
+                updated = get_all_settings()
                 return jsonify({
                     'success': True,
-                    'rates': DATA['settings']['exchange_rates'],
+                    'rates': updated['exchange_rates'],
                     'date': date.today().isoformat()
                 })
             return jsonify({'error': 'Invalid rates data'}), 400
