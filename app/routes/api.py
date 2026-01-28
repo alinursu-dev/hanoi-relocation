@@ -20,7 +20,13 @@ DATA = {
         'savings': 27500,  # RON
         'monthly_burn': 3000,  # RON
         'preferred_currency': 'EUR',
-        'github_username': ''
+        'github_username': '',
+        # Custom exchange rates (1 unit = X RON)
+        'exchange_rates': {
+            'EUR': 4.97,
+            'USD': 4.55,
+            'VND': 0.00018
+        }
     },
     'vietnamese_sessions': [
         {'id': 1, 'session_date': (date.today() - timedelta(days=1)).isoformat(), 'minutes': 45, 'session_type': 'duolingo', 'focus_area': 'Basic phrases'},
@@ -730,19 +736,33 @@ def handle_learning_path():
 
 # ============ CURRENCY ENDPOINT ============
 
-@api_bp.route('/currency.php', methods=['GET'])
+@api_bp.route('/currency.php', methods=['GET', 'PUT'])
 def currency():
     """Currency API endpoint."""
     action = request.args.get('action')
 
-    # Exchange rates (1 unit = X RON)
-    rates = {
+    # Get exchange rates from settings (user-configurable)
+    rates = DATA['settings'].get('exchange_rates', {
         'EUR': 4.97,
         'USD': 4.55,
         'VND': 0.00018
-    }
+    })
 
     if action == 'rates':
+        if request.method == 'PUT':
+            # Update exchange rates
+            data = request.get_json()
+            if data and 'rates' in data:
+                for currency_code, rate in data['rates'].items():
+                    if currency_code in ['EUR', 'USD', 'VND']:
+                        DATA['settings']['exchange_rates'][currency_code] = float(rate)
+                return jsonify({
+                    'success': True,
+                    'rates': DATA['settings']['exchange_rates'],
+                    'date': date.today().isoformat()
+                })
+            return jsonify({'error': 'Invalid rates data'}), 400
+
         return jsonify({
             'rates': rates,
             'date': date.today().isoformat()

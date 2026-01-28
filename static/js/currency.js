@@ -40,17 +40,36 @@ const Currency = {
      */
     async init() {
         try {
-            // Load exchange rates
+            // Load exchange rates first
             await this.loadRates();
 
-            // Load user preference from settings
-            await this.loadPreference();
+            // Load user preference from settings API
+            const apiCurrency = await this.loadPreference();
 
-            console.log('Currency module initialized');
-            console.log('Display currency:', this.displayCurrency);
-            console.log('Rates:', this.rates);
+            // Check localStorage for user's last saved preference
+            const localPref = localStorage.getItem('preferred_currency');
+
+            // If localStorage has a preference and it's different from API default,
+            // use localStorage and sync it back to the server
+            // This handles the case where server restarted and lost in-memory settings
+            if (localPref && this.currencies[localPref] && localPref !== this.displayCurrency) {
+                this.displayCurrency = localPref;
+                // Sync back to server silently
+                try {
+                    await API.settings.update({ preferred_currency: localPref });
+                } catch (e) {
+                    console.warn('Could not sync currency to server:', e);
+                }
+            }
+
+            console.log('Currency module initialized, display currency:', this.displayCurrency);
         } catch (error) {
             console.warn('Currency init error, using defaults:', error);
+            // Try localStorage fallback
+            const localPref = localStorage.getItem('preferred_currency');
+            if (localPref && this.currencies[localPref]) {
+                this.displayCurrency = localPref;
+            }
         }
     },
 
@@ -63,7 +82,8 @@ const Currency = {
             const data = await response.json();
 
             if (data.rates) {
-                this.rates = { ...this.rates, ...data.rates };
+                // Always include RON as base currency
+                this.rates = { RON: 1, ...data.rates };
                 this.rateDate = data.date;
             }
         } catch (error) {
@@ -73,20 +93,19 @@ const Currency = {
 
     /**
      * Load user's preferred currency from settings
+     * @returns {string} The currency loaded from API
      */
     async loadPreference() {
         try {
             const settings = await API.settings.get();
             if (settings.preferred_currency) {
                 this.displayCurrency = settings.preferred_currency;
+                return settings.preferred_currency;
             }
         } catch (error) {
-            // Use default or localStorage fallback
-            const saved = localStorage.getItem('preferred_currency');
-            if (saved && this.currencies[saved]) {
-                this.displayCurrency = saved;
-            }
+            console.warn('Failed to load preference from API:', error);
         }
+        return this.displayCurrency;
     },
 
     /**

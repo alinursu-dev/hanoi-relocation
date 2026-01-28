@@ -497,21 +497,21 @@
 
     <main class="dashboard-main">
         <div class="container">
-            <!-- Hero Section -->
+            <!-- Hero Section - All data from Python -->
             <div class="today-hero">
-                <div class="today-date" id="todayDate">Loading...</div>
-                <div class="today-countdown"><span id="daysRemaining">--</span> days to Hanoi</div>
-                <div class="today-motivation" id="motivation">Loading...</div>
+                <div class="today-date">{{ today_date }}</div>
+                <div class="today-countdown"><span>{{ days_remaining }}</span> days to Hanoi</div>
+                <div class="today-motivation">{{ motivation }}</div>
             </div>
 
-            <!-- Smart Focus Card -->
-            <div class="smart-focus-card" id="smartFocusCard">
+            <!-- Smart Focus Card - All data from Python -->
+            <div class="smart-focus-card priority-{{ focus.priority }}">
                 <div class="smart-focus-header">
-                    <span class="smart-focus-icon" id="focusIcon">🎯</span>
+                    <span class="smart-focus-icon">{{ focus.icon }}</span>
                     <span class="smart-focus-label">Today's Focus</span>
                 </div>
-                <div class="smart-focus-reason" id="focusReason">Loading...</div>
-                <div class="smart-focus-suggestion" id="focusSuggestion">Loading recommendation...</div>
+                <div class="smart-focus-reason">{{ focus.reason }}</div>
+                <div class="smart-focus-suggestion">{{ focus.suggestion }}</div>
             </div>
 
             <!-- Focus Cards Grid -->
@@ -523,27 +523,27 @@
                             <span class="icon">🐍</span>
                             Python Learning
                         </div>
-                        <span class="badge" id="pythonBadge">--</span>
+                        <span class="badge {{ python.badge_class }}" id="pythonBadge">{{ python.badge_text }}</span>
                     </div>
 
                     <div class="focus-progress">
                         <div class="focus-progress-header">
                             <span>Today's Progress</span>
-                            <span><span id="pythonTodayHours">0</span>h / <span id="pythonDailyTarget">1.1</span>h target</span>
+                            <span><span id="pythonTodayHours">{{ python.today_hours }}</span>h / {{ python.daily_target }}h target</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" id="pythonDailyProgress" style="width: 0%; background: #3572A5;"></div>
+                            <div class="progress-fill" id="pythonDailyProgress" style="width: {{ python.daily_progress }}%; background: #3572A5;"></div>
                         </div>
                     </div>
 
-                    <!-- Timer -->
+                    <!-- Timer (JavaScript required for real-time updates) -->
                     <div class="timer-display">
                         <div class="timer-time" id="pythonTimer">00:00:00</div>
                         <div class="timer-controls">
-                            <button class="timer-btn timer-btn-start" id="pythonStart" onclick="startTimer('python')">Start</button>
-                            <button class="timer-btn timer-btn-pause" id="pythonPause" onclick="pauseTimer('python')" style="display: none;">Pause</button>
-                            <button class="timer-btn timer-btn-stop" id="pythonStop" onclick="stopTimer('python')" style="display: none;">Save</button>
-                            <button class="timer-btn timer-btn-reset" id="pythonReset" onclick="resetTimer('python')" style="display: none;">Reset</button>
+                            <button class="timer-btn timer-btn-start" id="pythonStart" onclick="TimerManager.start('python')">Start</button>
+                            <button class="timer-btn timer-btn-pause" id="pythonPause" onclick="TimerManager.pause('python')" style="display: none;">Pause</button>
+                            <button class="timer-btn timer-btn-stop" id="pythonStop" onclick="TimerManager.stop('python')" style="display: none;">Save</button>
+                            <button class="timer-btn timer-btn-reset" id="pythonReset" onclick="TimerManager.reset('python')" style="display: none;">Reset</button>
                         </div>
                     </div>
 
@@ -551,26 +551,39 @@
                     <div class="quick-log">
                         <div class="quick-log-title">Quick log (without timer):</div>
                         <div class="quick-log-buttons">
-                            <button class="quick-log-btn" onclick="quickLog('python', 0.5)">+30min</button>
-                            <button class="quick-log-btn" onclick="quickLog('python', 1)">+1hr</button>
-                            <button class="quick-log-btn" onclick="quickLog('python', 1.5)">+1.5hr</button>
-                            <button class="quick-log-btn" onclick="quickLog('python', 2)">+2hr</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('python', 0.5)">+30min</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('python', 1)">+1hr</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('python', 1.5)">+1.5hr</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('python', 2)">+2hr</button>
                         </div>
                     </div>
 
-                    <!-- Today's Sessions -->
+                    <!-- Today's Sessions - Rendered by Python -->
                     <div class="today-sessions" id="pythonSessions">
-                        <!-- Rendered by JS -->
+                        {% if python.today_sessions %}
+                        <div class="quick-log-title">Today's sessions:</div>
+                        {% for session in python.today_sessions %}
+                        <div class="session-item" data-session-id="{{ session.id }}">
+                            <div class="session-info">
+                                <span class="session-topic">{{ session.topic or 'General' }}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: var(--space-12);">
+                                <span class="session-duration">{{ session.hours }}h</span>
+                                <span class="session-delete" onclick="SessionManager.delete('python', {{ session.id }})">&#10005;</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
                     </div>
 
                     <!-- Week Progress -->
                     <div class="week-progress">
                         <div class="week-progress-header">
                             <span class="week-progress-title">This Week</span>
-                            <span class="week-progress-value"><span id="pythonWeekHours">0</span>h / <span id="pythonWeekTarget">8</span>h</span>
+                            <span class="week-progress-value"><span id="pythonWeekHours">{{ python.week_hours }}</span>h / {{ python.weekly_target }}h</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" id="pythonWeekProgress" style="width: 0%; background: #3572A5;"></div>
+                            <div class="progress-fill" id="pythonWeekProgress" style="width: {{ python.week_progress }}%; background: #3572A5;"></div>
                         </div>
                     </div>
                 </div>
@@ -582,16 +595,16 @@
                             <span class="icon">🇻🇳</span>
                             Vietnamese Practice
                         </div>
-                        <span class="badge" id="vietnameseBadge">--</span>
+                        <span class="badge {{ vietnamese.badge_class }}" id="vietnameseBadge">{{ vietnamese.badge_text }}</span>
                     </div>
 
                     <div class="focus-progress">
                         <div class="focus-progress-header">
                             <span>Today's Progress</span>
-                            <span><span id="vietnameseTodayMins">0</span>m / <span id="vietnameseDailyTarget">60</span>m target</span>
+                            <span><span id="vietnameseTodayMins">{{ vietnamese.today_minutes }}</span>m / {{ vietnamese.daily_target }}m target</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" id="vietnameseDailyProgress" style="width: 0%; background: #DA251D;"></div>
+                            <div class="progress-fill" id="vietnameseDailyProgress" style="width: {{ vietnamese.daily_progress }}%; background: #DA251D;"></div>
                         </div>
                     </div>
 
@@ -599,10 +612,10 @@
                     <div class="timer-display">
                         <div class="timer-time" id="vietnameseTimer">00:00:00</div>
                         <div class="timer-controls">
-                            <button class="timer-btn timer-btn-start" id="vietnameseStart" onclick="startTimer('vietnamese')">Start</button>
-                            <button class="timer-btn timer-btn-pause" id="vietnamesePause" onclick="pauseTimer('vietnamese')" style="display: none;">Pause</button>
-                            <button class="timer-btn timer-btn-stop" id="vietnameseStop" onclick="stopTimer('vietnamese')" style="display: none;">Save</button>
-                            <button class="timer-btn timer-btn-reset" id="vietnameseReset" onclick="resetTimer('vietnamese')" style="display: none;">Reset</button>
+                            <button class="timer-btn timer-btn-start" id="vietnameseStart" onclick="TimerManager.start('vietnamese')">Start</button>
+                            <button class="timer-btn timer-btn-pause" id="vietnamesePause" onclick="TimerManager.pause('vietnamese')" style="display: none;">Pause</button>
+                            <button class="timer-btn timer-btn-stop" id="vietnameseStop" onclick="TimerManager.stop('vietnamese')" style="display: none;">Save</button>
+                            <button class="timer-btn timer-btn-reset" id="vietnameseReset" onclick="TimerManager.reset('vietnamese')" style="display: none;">Reset</button>
                         </div>
                     </div>
 
@@ -610,39 +623,52 @@
                     <div class="quick-log">
                         <div class="quick-log-title">Quick log (without timer):</div>
                         <div class="quick-log-buttons">
-                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 15)">+15min</button>
-                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 30)">+30min</button>
-                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 45)">+45min</button>
-                            <button class="quick-log-btn" onclick="quickLog('vietnamese', 60)">+1hr</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('vietnamese', 15)">+15min</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('vietnamese', 30)">+30min</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('vietnamese', 45)">+45min</button>
+                            <button class="quick-log-btn" onclick="SessionManager.quickLog('vietnamese', 60)">+1hr</button>
                         </div>
                     </div>
 
-                    <!-- Streak Display -->
+                    <!-- Streak Display - Rendered by Python -->
                     <div style="text-align: center; padding: var(--space-16); background: var(--color-background); border-radius: var(--radius-base); margin-top: var(--space-16);">
                         <span style="font-size: 32px;">🔥</span>
-                        <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-warning);" id="streakCount">0</span>
+                        <span style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-warning);" id="streakCount">{{ vietnamese.streak }}</span>
                         <span style="color: var(--color-text-secondary);">day streak</span>
                     </div>
 
-                    <!-- Today's Sessions -->
+                    <!-- Today's Sessions - Rendered by Python -->
                     <div class="today-sessions" id="vietnameseSessions">
-                        <!-- Rendered by JS -->
+                        {% if vietnamese.today_sessions %}
+                        <div class="quick-log-title">Today's sessions:</div>
+                        {% for session in vietnamese.today_sessions %}
+                        <div class="session-item" data-session-id="{{ session.id }}">
+                            <div class="session-info">
+                                <span class="session-topic">{{ session.focus_area or session.session_type or 'Practice' }}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: var(--space-12);">
+                                <span class="session-duration">{{ session.minutes }}m</span>
+                                <span class="session-delete" onclick="SessionManager.delete('vietnamese', {{ session.id }})">&#10005;</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
                     </div>
 
                     <!-- Week Progress -->
                     <div class="week-progress">
                         <div class="week-progress-header">
                             <span class="week-progress-title">This Week</span>
-                            <span class="week-progress-value"><span id="vietnameseWeekHours">0</span>h / <span id="vietnameseWeekTarget">7</span>h</span>
+                            <span class="week-progress-value"><span id="vietnameseWeekHours">{{ vietnamese.week_hours }}</span>h / {{ vietnamese.weekly_target_hours }}h</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" id="vietnameseWeekProgress" style="width: 0%; background: #DA251D;"></div>
+                            <div class="progress-fill" id="vietnameseWeekProgress" style="width: {{ vietnamese.week_progress }}%; background: #DA251D;"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Income Progress -->
+            <!-- Income Progress - Rendered by Python with currency formatting -->
             <div class="income-card">
                 <div class="focus-card-header">
                     <div class="focus-card-title">
@@ -655,27 +681,27 @@
                         <svg width="120" height="120" viewBox="0 0 120 120">
                             <circle class="ring-background" cx="60" cy="60" r="54"/>
                             <circle class="ring-progress" id="incomeRing" cx="60" cy="60" r="54"
-                                stroke-dasharray="339.292" stroke-dashoffset="339.292"/>
+                                stroke-dasharray="339.292" stroke-dashoffset="{{ income.ring_offset }}"/>
                         </svg>
                         <div class="ring-text">
-                            <div class="ring-percentage" id="incomePercentage">0%</div>
+                            <div class="ring-percentage">{{ income.progress }}%</div>
                             <div class="ring-label">of target</div>
                         </div>
                     </div>
                     <div class="income-details">
-                        <div class="income-amount" id="incomeThisMonth">--</div>
-                        <div class="income-target">of <span id="incomeTarget">--</span> target</div>
+                        <div class="income-amount" data-ron="{{ income.this_month }}">{{ format_currency(income.this_month) }}</div>
+                        <div class="income-target">of <span data-ron="{{ income.target }}">{{ format_currency(income.target) }}</span> target</div>
                         <div class="income-gap">
-                            <strong id="incomeGap">--</strong> remaining this month
+                            <strong data-ron="{{ income.gap }}">{{ format_currency(income.gap) }}</strong> remaining this month
                             <br>
-                            <small class="text-secondary"><span id="daysLeftMonth">--</span> days left</small>
+                            <small class="text-secondary">{{ income.days_left }} days left</small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Upcoming Milestones -->
-            <div class="milestones-card" id="milestonesSection">
+            <!-- Upcoming Milestones - Rendered by Python -->
+            <div class="milestones-card">
                 <div class="focus-card-header">
                     <div class="focus-card-title">
                         <span class="icon">🎯</span>
@@ -683,18 +709,37 @@
                     </div>
                 </div>
                 <div id="upcomingMilestones">
-                    <p class="text-secondary text-sm">No milestones this week</p>
+                    {% if milestones %}
+                        {% for m in milestones %}
+                        <div class="milestone-item">
+                            <div class="milestone-date">
+                                <div class="milestone-date-day">{{ m.day }}</div>
+                                <div class="milestone-date-month">{{ m.month_short }}</div>
+                            </div>
+                            <div>
+                                <strong>{{ m.title }}</strong>
+                                {% if m.category %}
+                                <span class="badge badge-neutral" style="margin-left: 8px;">{{ m.category }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-secondary text-sm">No milestones this week. Great time to focus on learning!</p>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Evening Reflection (show after 6 PM) -->
-            <div class="reflection-prompt" id="reflectionPrompt" style="display: none;">
+            <!-- Evening Reflection (show after 6 PM) - Controlled by Python -->
+            {% if show_reflection %}
+            <div class="reflection-prompt">
                 <h4>Evening Reflection</h4>
                 <p>How did today go? What did you learn? What will you do differently tomorrow?</p>
-                <button class="btn btn-secondary mt-12" onclick="window.location.href='index.html'">
+                <button class="btn btn-secondary mt-12" onclick="window.location.href='/'">
                     Open Full Dashboard
                 </button>
             </div>
+            {% endif %}
         </div>
     </main>
 
@@ -704,7 +749,7 @@
 
     <!-- Topic Modal for Timer Sessions -->
     <div class="modal" id="topicModal" style="display: none;">
-        <div class="modal-backdrop" onclick="closeTopicModal()"></div>
+        <div class="modal-backdrop" onclick="ModalManager.close()"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="topicModalTitle">What did you work on?</h3>
@@ -720,8 +765,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeTopicModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveTimerSession()">Save Session</button>
+                <button class="btn btn-secondary" onclick="ModalManager.close()">Cancel</button>
+                <button class="btn btn-primary" onclick="ModalManager.save()">Save Session</button>
             </div>
         </div>
     </div>
@@ -731,204 +776,43 @@
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/currency.js"></script>
     <script>
-        // Timer state
-        const timers = {
+    /**
+     * Minimal JavaScript - Only handles:
+     * 1. Timers (must run in browser)
+     * 2. API calls for creating/deleting sessions
+     * 3. Page refresh after data changes
+     *
+     * All data rendering and calculations are done in Python.
+     */
+
+    // Timer state (browser-only - cannot be done in Python)
+    const TimerManager = {
+        timers: {
             python: { running: false, paused: false, seconds: 0, interval: null },
             vietnamese: { running: false, paused: false, seconds: 0, interval: null }
-        };
+        },
+        currentType: null,
 
-        let todayData = null;
-        let currentTimerType = null;
+        formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        },
 
-        // Initialize
-        (async function init() {
-            await Currency.init();
-            await loadTodayData();
-            await loadRecommendations();
-            renderUI();
-            showEveningReflection();
+        updateDisplay(type) {
+            document.getElementById(`${type}Timer`).textContent = this.formatTime(this.timers[type].seconds);
+        },
 
-            // Restore timers from localStorage
-            restoreTimerState();
-
-            // Listen for currency changes
-            window.addEventListener('currencyChanged', () => {
-                renderUI();
-            });
-        })();
-
-        async function loadRecommendations() {
-            try {
-                const response = await fetch('/api/dashboard.php?action=recommendations');
-                const data = await response.json();
-                renderSmartFocus(data);
-            } catch (error) {
-                console.error('Failed to load recommendations:', error);
-            }
-        }
-
-        function renderSmartFocus(data) {
-            const card = document.getElementById('smartFocusCard');
-            const focus = data.daily_focus;
-
-            // Set priority class
-            card.className = 'smart-focus-card priority-' + focus.priority;
-
-            // Update content
-            document.getElementById('focusIcon').textContent = focus.icon;
-            document.getElementById('focusReason').textContent = focus.reason;
-            document.getElementById('focusSuggestion').textContent = focus.suggestion;
-        }
-
-        async function loadTodayData() {
-            try {
-                todayData = await API.dashboard.getToday();
-            } catch (error) {
-                console.error('Failed to load today data:', error);
-            }
-        }
-
-        function renderUI() {
-            if (!todayData) return;
-
-            // Date and countdown
-            const date = new Date();
-            document.getElementById('todayDate').textContent = date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            document.getElementById('daysRemaining').textContent = todayData.daysRemaining;
-            document.getElementById('motivation').textContent = todayData.motivation;
-
-            // Python progress
-            const pyData = todayData.python;
-            document.getElementById('pythonTodayHours').textContent = pyData.todayHours.toFixed(1);
-            document.getElementById('pythonDailyTarget').textContent = pyData.dailyTarget;
-            document.getElementById('pythonDailyProgress').style.width = Math.min(100, (pyData.todayHours / pyData.dailyTarget) * 100) + '%';
-            document.getElementById('pythonWeekHours').textContent = pyData.weekHours.toFixed(1);
-            document.getElementById('pythonWeekTarget').textContent = pyData.weeklyTarget;
-            document.getElementById('pythonWeekProgress').style.width = Math.min(100, pyData.weekProgress) + '%';
-
-            // Python badge
-            const pyBadge = document.getElementById('pythonBadge');
-            if (pyData.todayHours >= pyData.dailyTarget) {
-                pyBadge.textContent = 'Done!';
-                pyBadge.className = 'badge badge-success';
-            } else {
-                pyBadge.textContent = `${(pyData.dailyTarget - pyData.todayHours).toFixed(1)}h left`;
-                pyBadge.className = 'badge badge-neutral';
-            }
-
-            // Vietnamese progress
-            const vnData = todayData.vietnamese;
-            document.getElementById('vietnameseTodayMins').textContent = vnData.todayMinutes;
-            document.getElementById('vietnameseDailyTarget').textContent = vnData.dailyTarget;
-            document.getElementById('vietnameseDailyProgress').style.width = Math.min(100, (vnData.todayMinutes / vnData.dailyTarget) * 100) + '%';
-            document.getElementById('vietnameseWeekHours').textContent = (vnData.weekMinutes / 60).toFixed(1);
-            document.getElementById('vietnameseWeekTarget').textContent = (vnData.weeklyTarget / 60).toFixed(0);
-            document.getElementById('vietnameseWeekProgress').style.width = Math.min(100, vnData.weekProgress) + '%';
-            document.getElementById('streakCount').textContent = vnData.streak;
-
-            // Vietnamese badge
-            const vnBadge = document.getElementById('vietnameseBadge');
-            if (vnData.todayMinutes >= vnData.dailyTarget) {
-                vnBadge.textContent = 'Done!';
-                vnBadge.className = 'badge badge-success';
-            } else {
-                vnBadge.textContent = `${vnData.dailyTarget - vnData.todayMinutes}m left`;
-                vnBadge.className = 'badge badge-neutral';
-            }
-
-            // Income progress (amounts in RON)
-            const incData = todayData.income;
-            document.getElementById('incomeThisMonth').textContent = Currency.formatFromRon(incData.thisMonth);
-            document.getElementById('incomeTarget').textContent = Currency.formatFromRon(incData.target);
-            document.getElementById('incomeGap').textContent = Currency.formatFromRon(incData.gap);
-            document.getElementById('incomePercentage').textContent = Math.min(100, incData.progress) + '%';
-
-            // Days left in month
-            const today = new Date();
-            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            document.getElementById('daysLeftMonth').textContent = lastDay.getDate() - today.getDate();
-
-            // Income ring
-            const ring = document.getElementById('incomeRing');
-            const circumference = 339.292;
-            const offset = circumference - (Math.min(100, incData.progress) / 100) * circumference;
-            ring.style.strokeDashoffset = offset;
-
-            // Render sessions
-            renderSessions('python', pyData.todaySessions);
-            renderSessions('vietnamese', vnData.todaySessions);
-
-            // Render milestones
-            renderMilestones(todayData.upcomingMilestones);
-        }
-
-        function renderSessions(type, sessions) {
-            const container = document.getElementById(`${type}Sessions`);
-
-            if (!sessions || sessions.length === 0) {
-                container.innerHTML = '';
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="quick-log-title">Today's sessions:</div>
-                ${sessions.map(s => `
-                    <div class="session-item">
-                        <div class="session-info">
-                            <span class="session-topic">${type === 'python' ? (s.topic || 'General') : (s.focus_area || s.session_type || 'Practice')}</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: var(--space-12);">
-                            <span class="session-duration">${type === 'python' ? s.hours + 'h' : s.minutes + 'm'}</span>
-                            <span class="session-delete" onclick="deleteSession('${type}', ${s.id})">✕</span>
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-        }
-
-        function renderMilestones(milestones) {
-            const container = document.getElementById('upcomingMilestones');
-
-            if (!milestones || milestones.length === 0) {
-                container.innerHTML = '<p class="text-secondary text-sm">No milestones this week. Great time to focus on learning!</p>';
-                return;
-            }
-
-            container.innerHTML = milestones.map(m => {
-                const date = new Date(m.target_date);
-                return `
-                    <div class="milestone-item">
-                        <div class="milestone-date">
-                            <div class="milestone-date-day">${date.getDate()}</div>
-                            <div class="milestone-date-month">${date.toLocaleDateString('en-US', { month: 'short' })}</div>
-                        </div>
-                        <div>
-                            <strong>${m.title}</strong>
-                            ${m.category ? `<span class="badge badge-neutral" style="margin-left: 8px;">${m.category}</span>` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Timer functions
-        function startTimer(type) {
-            const timer = timers[type];
-
-            if (timer.paused) {
-                timer.paused = false;
-            }
-
+        start(type) {
+            const timer = this.timers[type];
+            if (timer.paused) timer.paused = false;
             timer.running = true;
+
             timer.interval = setInterval(() => {
                 timer.seconds++;
-                updateTimerDisplay(type);
-                saveTimerState();
+                this.updateDisplay(type);
+                this.saveState();
             }, 1000);
 
             document.getElementById(`${type}Start`).style.display = 'none';
@@ -936,10 +820,10 @@
             document.getElementById(`${type}Stop`).style.display = 'inline-block';
             document.getElementById(`${type}Reset`).style.display = 'inline-block';
             document.getElementById(`${type}Timer`).classList.add('running');
-        }
+        },
 
-        function pauseTimer(type) {
-            const timer = timers[type];
+        pause(type) {
+            const timer = this.timers[type];
             timer.running = false;
             timer.paused = true;
             clearInterval(timer.interval);
@@ -948,13 +832,11 @@
             document.getElementById(`${type}Start`).textContent = 'Resume';
             document.getElementById(`${type}Pause`).style.display = 'none';
             document.getElementById(`${type}Timer`).classList.remove('running');
+            this.saveState();
+        },
 
-            saveTimerState();
-        }
-
-        function stopTimer(type) {
-            const timer = timers[type];
-
+        stop(type) {
+            const timer = this.timers[type];
             if (timer.seconds < 60) {
                 alert('Session too short (minimum 1 minute)');
                 return;
@@ -962,23 +844,22 @@
 
             clearInterval(timer.interval);
             timer.running = false;
+            this.currentType = type;
 
-            // Show topic modal
-            currentTimerType = type;
             document.getElementById('topicModalTitle').textContent =
                 type === 'python' ? 'What did you learn?' : 'What did you practice?';
-            document.getElementById('sessionDuration').value = formatTime(timer.seconds);
+            document.getElementById('sessionDuration').value = this.formatTime(timer.seconds);
             document.getElementById('topicModal').style.display = 'flex';
-        }
+        },
 
-        function resetTimer(type) {
-            const timer = timers[type];
+        reset(type) {
+            const timer = this.timers[type];
             clearInterval(timer.interval);
             timer.running = false;
             timer.paused = false;
             timer.seconds = 0;
 
-            updateTimerDisplay(type);
+            this.updateDisplay(type);
 
             document.getElementById(`${type}Start`).style.display = 'inline-block';
             document.getElementById(`${type}Start`).textContent = 'Start';
@@ -986,128 +867,30 @@
             document.getElementById(`${type}Stop`).style.display = 'none';
             document.getElementById(`${type}Reset`).style.display = 'none';
             document.getElementById(`${type}Timer`).classList.remove('running');
+            this.clearState(type);
+        },
 
-            clearTimerState(type);
-        }
-
-        function updateTimerDisplay(type) {
-            document.getElementById(`${type}Timer`).textContent = formatTime(timers[type].seconds);
-        }
-
-        function formatTime(totalSeconds) {
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        async function saveTimerSession() {
-            const topic = document.getElementById('sessionTopic').value || 'General';
-            const timer = timers[currentTimerType];
-            const today = new Date().toISOString().split('T')[0];
-
-            try {
-                if (currentTimerType === 'python') {
-                    const hours = Math.round((timer.seconds / 3600) * 100) / 100;
-                    await API.python.create({
-                        date: today,
-                        hours: hours,
-                        topic: topic
-                    });
-                } else {
-                    const minutes = Math.round(timer.seconds / 60);
-                    await API.vietnamese.create({
-                        date: today,
-                        minutes: minutes,
-                        type: 'practice',
-                        focus: topic
-                    });
-                }
-
-                closeTopicModal();
-                resetTimer(currentTimerType);
-                await loadTodayData();
-                renderUI();
-            } catch (error) {
-                alert('Failed to save session: ' + error.message);
-            }
-        }
-
-        function closeTopicModal() {
-            document.getElementById('topicModal').style.display = 'none';
-            document.getElementById('sessionTopic').value = '';
-        }
-
-        // Quick log functions
-        async function quickLog(type, amount) {
-            const today = new Date().toISOString().split('T')[0];
-
-            try {
-                if (type === 'python') {
-                    await API.python.create({
-                        date: today,
-                        hours: amount,
-                        topic: 'Quick log'
-                    });
-                } else {
-                    await API.vietnamese.create({
-                        date: today,
-                        minutes: amount,
-                        type: 'practice',
-                        focus: 'Quick log'
-                    });
-                }
-
-                await loadTodayData();
-                renderUI();
-            } catch (error) {
-                alert('Failed to log session: ' + error.message);
-            }
-        }
-
-        async function deleteSession(type, id) {
-            if (!confirm('Delete this session?')) return;
-
-            try {
-                if (type === 'python') {
-                    await API.python.delete(id);
-                } else {
-                    await API.vietnamese.delete(id);
-                }
-
-                await loadTodayData();
-                renderUI();
-            } catch (error) {
-                alert('Failed to delete session: ' + error.message);
-            }
-        }
-
-        // Timer persistence
-        function saveTimerState() {
+        saveState() {
             localStorage.setItem('today_timers', JSON.stringify({
-                python: { seconds: timers.python.seconds, running: timers.python.running, paused: timers.python.paused },
-                vietnamese: { seconds: timers.vietnamese.seconds, running: timers.vietnamese.running, paused: timers.vietnamese.paused },
+                python: { seconds: this.timers.python.seconds, running: this.timers.python.running, paused: this.timers.python.paused },
+                vietnamese: { seconds: this.timers.vietnamese.seconds, running: this.timers.vietnamese.running, paused: this.timers.vietnamese.paused },
                 timestamp: Date.now()
             }));
-        }
+        },
 
-        function clearTimerState(type) {
+        clearState(type) {
             const state = JSON.parse(localStorage.getItem('today_timers') || '{}');
             if (state[type]) {
                 state[type] = { seconds: 0, running: false, paused: false };
                 localStorage.setItem('today_timers', JSON.stringify(state));
             }
-        }
+        },
 
-        function restoreTimerState() {
+        restoreState() {
             const state = JSON.parse(localStorage.getItem('today_timers') || '{}');
-
-            // Only restore if saved today
             if (state.timestamp) {
                 const savedDate = new Date(state.timestamp).toDateString();
-                const today = new Date().toDateString();
-
-                if (savedDate !== today) {
+                if (savedDate !== new Date().toDateString()) {
                     localStorage.removeItem('today_timers');
                     return;
                 }
@@ -1115,14 +898,13 @@
 
             ['python', 'vietnamese'].forEach(type => {
                 if (state[type] && state[type].seconds > 0) {
-                    timers[type].seconds = state[type].seconds;
-                    timers[type].paused = state[type].paused;
-                    updateTimerDisplay(type);
+                    this.timers[type].seconds = state[type].seconds;
+                    this.timers[type].paused = state[type].paused;
+                    this.updateDisplay(type);
 
                     if (state[type].running) {
-                        startTimer(type);
+                        this.start(type);
                     } else if (state[type].paused) {
-                        // Show paused state
                         document.getElementById(`${type}Start`).textContent = 'Resume';
                         document.getElementById(`${type}Stop`).style.display = 'inline-block';
                         document.getElementById(`${type}Reset`).style.display = 'inline-block';
@@ -1130,16 +912,78 @@
                 }
             });
         }
+    };
 
-        // Evening reflection
-        function showEveningReflection() {
-            const hour = new Date().getHours();
-            if (hour >= 18) {
-                document.getElementById('reflectionPrompt').style.display = 'block';
+    // Session management (API calls only)
+    const SessionManager = {
+        async quickLog(type, amount) {
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                if (type === 'python') {
+                    await API.python.create({ date: today, hours: amount, topic: 'Quick log' });
+                } else {
+                    await API.vietnamese.create({ date: today, minutes: amount, type: 'practice', focus: 'Quick log' });
+                }
+                location.reload(); // Refresh to get Python-rendered data
+            } catch (error) {
+                alert('Failed to log session: ' + error.message);
+            }
+        },
+
+        async delete(type, id) {
+            if (!confirm('Delete this session?')) return;
+            try {
+                if (type === 'python') {
+                    await API.python.delete(id);
+                } else {
+                    await API.vietnamese.delete(id);
+                }
+                location.reload(); // Refresh to get Python-rendered data
+            } catch (error) {
+                alert('Failed to delete session: ' + error.message);
             }
         }
+    };
 
-        // (Login is not required in public dashboard mode)
+    // Modal management
+    const ModalManager = {
+        close() {
+            document.getElementById('topicModal').style.display = 'none';
+            document.getElementById('sessionTopic').value = '';
+        },
+
+        async save() {
+            const topic = document.getElementById('sessionTopic').value || 'General';
+            const type = TimerManager.currentType;
+            const timer = TimerManager.timers[type];
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                if (type === 'python') {
+                    const hours = Math.round((timer.seconds / 3600) * 100) / 100;
+                    await API.python.create({ date: today, hours: hours, topic: topic });
+                } else {
+                    const minutes = Math.round(timer.seconds / 60);
+                    await API.vietnamese.create({ date: today, minutes: minutes, type: 'practice', focus: topic });
+                }
+
+                this.close();
+                TimerManager.reset(type);
+                location.reload(); // Refresh to get Python-rendered data
+            } catch (error) {
+                alert('Failed to save session: ' + error.message);
+            }
+        }
+    };
+
+    // Initialize on page load
+    (async function init() {
+        await Currency.init();
+        TimerManager.restoreState();
+
+        // Listen for currency changes to refresh page
+        window.addEventListener('currencyChanged', () => location.reload());
+    })();
     </script>
 </body>
 </html>

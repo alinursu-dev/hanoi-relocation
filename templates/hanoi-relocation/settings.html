@@ -122,6 +122,30 @@
                 </form>
             </div>
 
+            <!-- Exchange Rates -->
+            <div class="card mb-24">
+                <div class="card-header">
+                    <h2 class="card-title">Exchange Rates</h2>
+                </div>
+                <p class="form-hint mb-16">Configure exchange rates relative to RON (Romanian Leu). These rates are used for all currency conversions.</p>
+                <form id="exchangeRatesForm">
+                    <div class="form-group">
+                        <label class="form-label">1 EUR = X RON</label>
+                        <input type="number" id="rateEUR" class="form-control" step="0.01" min="0.01" placeholder="4.97">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">1 USD = X RON</label>
+                        <input type="number" id="rateUSD" class="form-control" step="0.01" min="0.01" placeholder="4.55">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">1 VND = X RON</label>
+                        <input type="number" id="rateVND" class="form-control" step="0.000001" min="0.000001" placeholder="0.00018">
+                        <p class="form-hint">Vietnamese Dong has a very small exchange rate</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Exchange Rates</button>
+                </form>
+            </div>
+
             <!-- Data Management -->
             <div class="card">
                 <div class="card-header">
@@ -147,6 +171,7 @@
         let settings = null;
 
         (async function init() {
+            await Currency.init();
             await loadSettings();
             await loadUser();
             await loadExchangeRates();
@@ -168,10 +193,17 @@
                     Currency.rates = { RON: 1, ...data.rates };
                     Currency.rateDate = data.date;
                     updateExchangeRateInfo();
+                    populateExchangeRates(data.rates);
                 }
             } catch (error) {
                 console.warn('Failed to load exchange rates:', error);
             }
+        }
+
+        function populateExchangeRates(rates) {
+            document.getElementById('rateEUR').value = rates.EUR || 4.97;
+            document.getElementById('rateUSD').value = rates.USD || 4.55;
+            document.getElementById('rateVND').value = rates.VND || 0.00018;
         }
 
         function updateExchangeRateInfo() {
@@ -207,7 +239,11 @@
             document.getElementById('pythonTarget').value = settings.python_weekly_target || 8;
             document.getElementById('vietnameseTarget').value = settings.vietnamese_weekly_target || 7;
             document.getElementById('githubUsername').value = settings.github_username || '';
-            document.getElementById('preferredCurrency').value = settings.preferred_currency || 'RON';
+
+            // Use localStorage preference if available (persists across server restarts)
+            const localPref = localStorage.getItem('preferred_currency');
+            const preferredCurrency = localPref || settings.preferred_currency || 'RON';
+            document.getElementById('preferredCurrency').value = preferredCurrency;
 
             // Financial values are stored in RON, convert to EUR for display by default
             const displayCurrency = 'EUR';
@@ -308,7 +344,34 @@
 
         document.getElementById('preferredCurrency').addEventListener('change', updateExchangeRateInfo);
 
-        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+        document.getElementById('exchangeRatesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const rates = {
+                    EUR: parseFloat(document.getElementById('rateEUR').value),
+                    USD: parseFloat(document.getElementById('rateUSD').value),
+                    VND: parseFloat(document.getElementById('rateVND').value)
+                };
+
+                const response = await fetch('/api/currency.php?action=rates', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rates })
+                });
+
+                if (!response.ok) throw new Error('Failed to save rates');
+
+                const data = await response.json();
+                Currency.rates = { RON: 1, ...data.rates };
+                Currency.rateDate = data.date;
+                updateExchangeRateInfo();
+                showAlert('Exchange rates saved!');
+            } catch (error) {
+                showAlert('Failed to save: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('passwordForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const current = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;

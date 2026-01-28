@@ -10,11 +10,6 @@ def index():
     return render_template('hanoi-relocation/index.html')
 
 
-@main_bp.route('/today')
-def today():
-    return render_template('hanoi-relocation/today.html')
-
-
 @main_bp.route('/settings')
 def settings():
     return render_template('hanoi-relocation/settings.html')
